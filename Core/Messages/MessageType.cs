@@ -1,4 +1,4 @@
-﻿namespace BPServer.Core
+﻿namespace BPServer.Core.Messages
 {
     public enum MessageType
     {

@@ -1,8 +1,8 @@
-﻿using System;
-using BPServer.Core.Exceptions;
-
-namespace BPServer.Core
+﻿namespace BPServer.Core.Messages
 {
+    using System;
+    using BPServer.Core.Exceptions;
+
     public class RequestMessage : Message
     {
         public RequestMessage(byte[] message) : base(message)

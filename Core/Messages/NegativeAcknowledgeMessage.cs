@@ -1,7 +1,6 @@
-﻿using BPServer.Core.Exceptions;
-
-namespace BPServer.Core
+﻿namespace BPServer.Core.Messages
 {
+    using BPServer.Core.Exceptions;
     public class NegativeAcknowledgeMessage : Message
     {
         public NegativeAcknowledgeMessage(byte[] message) : base(message)

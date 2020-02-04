@@ -1,9 +1,6 @@
-﻿using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Text;
-
-namespace BPServer.Core
+﻿namespace BPServer.Core.Messages
 {
+    using System.Collections.Generic;
     public interface IMessage
     {
         byte[] Raw { get; }
