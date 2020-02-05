@@ -3,9 +3,7 @@
     using BPServer.Core.Attributes;
     using BPServer.Core.Messages;
     using System.Threading.Tasks;
-    public interface INotificationHandler : IHandler
+    public interface INotificationHandler : IHandler<NotificationMessage>
     {
-        [Method(MessageType.Notification)]
-        Task Notification(NotificationMessage input);
     }
 }

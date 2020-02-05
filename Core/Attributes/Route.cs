@@ -1,13 +1,13 @@
 ﻿namespace BPServer.Core.Attributes
 {
     [System.AttributeUsage(System.AttributeTargets.Class)]
-    public sealed class Route : System.Attribute
+    public sealed class RouteAttribute : System.Attribute
     {
-        public byte route;
+        public byte Route;
 
-        public Route(byte route)
+        public RouteAttribute(byte route)
         {
-            this.route = route;
+            Route = route;
         }
     }
 }

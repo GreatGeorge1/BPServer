@@ -1,6 +1,9 @@
 ﻿namespace BPServer.Core.Messages
 {
+    using BPServer.Core.Attributes;
     using BPServer.Core.Exceptions;
+
+    [MessageType((byte)MessageType.Notification)]
     public class NotificationMessage : Message
     {
         public NotificationMessage(byte[] message) : base(message)

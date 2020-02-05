@@ -4,12 +4,8 @@
     using BPServer.Core.Messages;
     using System.Threading.Tasks;
 
-    public interface IAcknowledgeHandler : IHandler
+    public interface IAcknowledgeHandler : IHandler<AcknowledgeMessage>, IHandler<NegativeAcknowledgeMessage>
     {
-        [Method(MessageType.ACK)]
-        Task Acknowledge(AcknowledgMessage input);
-
-        [Method(MessageType.NACK)]
-        Task NegativeAcknowledge(NegativeAcknowledgeMessage input);
+      
     }
 }

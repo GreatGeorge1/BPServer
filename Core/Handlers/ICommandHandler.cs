@@ -1,6 +1,8 @@
-﻿namespace BPServer.Core.Handlers
+﻿using BPServer.Core.Messages;
+
+namespace BPServer.Core.Handlers
 {
-    public interface ICommandHandler<TCommand> : IAcknowledgeHandler
+    public interface ICommandHandler<TCommand> : IAcknowledgeHandler, IHandler<CommandMessage>
         where TCommand : ICommand
     {
 

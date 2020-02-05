@@ -1,7 +1,9 @@
-﻿using BPServer.Core.Exceptions;
-
-namespace BPServer.Core
+﻿namespace BPServer.Core.Messages
 {
+    using BPServer.Core.Attributes;
+    using BPServer.Core.Exceptions;
+
+    [MessageType((byte)MessageType.CommandResponse)]
     public class CommandResponseMessage : Message
     {
         public CommandResponseMessage(byte[] message) : base(message)
@@ -15,7 +17,5 @@ namespace BPServer.Core
         public CommandResponseMessage(byte Route, byte[] Value) : base(MessageType.CommandResponse, Route, Value)
         {
         }
-
-        public new const MessageType Type = MessageType.CommandResponse;
     }
 }

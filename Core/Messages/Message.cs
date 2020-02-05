@@ -3,8 +3,10 @@
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using BPServer.Core.Attributes;
     using Dawn;
 
+    [MessageType((byte)MessageType.NotSet)]
     public abstract class Message : IMessage
     {
         public byte[] Raw { get; private set; }
@@ -17,8 +19,15 @@
 
         public byte BodyXor { get; private set; }
 
-        protected Message(byte[] message)
+
+        public Guid Id { get; private set; }
+        public DateTime CreationDate {get; private set;}
+
+        protected Message(Guid id,byte[] message)
         {
+            Id = id;
+            CreationDate = DateTime.UtcNow;
+
             Raw = Guard.Argument(message, nameof(message)).NotNull().MinCount(8);
             Guard.Argument(message[0]==0x02).True();
             Route = message[2];
@@ -31,8 +40,20 @@
             Body = message.Skip(6).Take(length).ToArray();
         }
 
-        protected Message(MessageType Mtype,byte Route, byte[] Value) 
+        protected Message(byte[] message): this(Guid.NewGuid(), message)
         {
+        }
+
+        protected Message(MessageType Mtype, byte Route, byte[] Value)
+            : this(Guid.NewGuid(),Mtype, Route, Value) 
+        {
+        }
+
+        protected Message(Guid id,MessageType Mtype,byte Route, byte[] Value) 
+        {
+            Id = id;
+            CreationDate = DateTime.UtcNow;
+
             Guard.Argument(Value, nameof(Value)).NotNull().MinCount(2);
             Guard.Argument(Mtype).Defined();
             var xor = CalCheckSum(Value);
