@@ -4,23 +4,26 @@ using System.Text;
 
 namespace BPServer.Core.Handlers
 {
-    public partial class InMemoryMessageBusSubscriptionsManager : IMessageBusSubscriptionManager
-    {
+
         public class SubscriptionInfo
         {
-            public byte Route { get; }
+            public IAddress Address { get; }
             public Type HandlerType { get; }
 
-            private SubscriptionInfo(Type handlerType, byte route)
+            private SubscriptionInfo(Type handlerType, IAddress address)
             {
                 HandlerType = handlerType;
-                Route = route;
+                Address = address;
             }
 
-            public static SubscriptionInfo Typed(Type handlerType, byte route)
+            public static SubscriptionInfo ReadOnly(Type handlerType, IAddress address)
             {
-                return new SubscriptionInfo(handlerType, route);
+                return new SubscriptionInfo(handlerType, address);
             }
-        }
-    }
+
+            public static SubscriptionInfo ReadWrite(Type handlerType, IAddress address)
+            {
+                return new SubscriptionInfo(handlerType, address);
+            }
+        }    
 }

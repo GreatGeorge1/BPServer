@@ -12,6 +12,5 @@
         ICollection<byte> Body { get; }
         byte Route { get; }
         MessageType Type { get; }
-        //byte Type();
     }
 }

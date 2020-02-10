@@ -3,53 +3,43 @@
     using BPServer.Core.Messages;
     using System;
     using System.Collections.Generic;
-    using System.Linq;
     using System.Text;
-    using static BPServer.Core.Handlers.InMemoryMessageBusSubscriptionsManager;
+
+
+    public interface IHandlerProcessManager
+    {
+
+    }
 
     public interface IMessageBusSubscriptionManager
     {
         bool IsEmpty { get; }
 
-        event EventHandler<(byte, byte)> OnRouteMessageRemoved;
+        Dictionary<string,List<IHandler>> OnRun { get; }
+        Queue<IMessage> messages { get; }
 
-        void AddSubscription<T, TH>()
+        event EventHandler<IAddress> AddressRemoved;
+
+        void OnReady(IHandler<IMessage> handler);
+        void OnWaiting(IHandler<IMessage> handler);
+        void OnCompleted(IHandler<IMessage> handler);
+
+        void AddSubscription<T, TH>(string serialPort,SubscriptionType subscriptionType)
             where T : IMessage
             where TH : IHandler<IMessage>;
+
+        void AddDynamicSubscription<T, TH>(string serialPort, SubscriptionType subscriptionType)
+            where T : IMessage
+            where TH : IHandler<IMessage>;
+
         void Clear();
-        IEnumerable<SubscriptionInfo> GetHandlersForRoute(byte route, byte messageType);
+        IEnumerable<SubscriptionInfo> GetHandlersForAddress(IAddress address);
         string GetMessageKey<T>();
-        Type GetMessageTypeByByte(byte route, byte messageType);
-        bool HasSubscriptionsForMessage(byte route, byte messageType);
-        bool HasSubscriptionsForMessage<T>(byte route) where T : IMessage;
-        void RemoveSubscription<T, TH>()
+        Type GetMessageTypeByAddress(IAddress address);
+        bool HasSubscriptionsForAddress(IAddress address);
+        bool HasSubscriptionsForMessage<T>(string serialPort) where T : IMessage;
+        void RemoveSubscription<T, TH>(string serialPort)
             where T : IMessage
             where TH : IHandler<IMessage>;
-    }
-
-
-    public static class GenericTypeExtensions
-    {
-        public static string GetGenericTypeName(this Type type)
-        {
-            var typeName = string.Empty;
-
-            if (type.IsGenericType)
-            {
-                var genericTypes = string.Join(",", type.GetGenericArguments().Select(t => t.Name).ToArray());
-                typeName = $"{type.Name.Remove(type.Name.IndexOf('`'))}<{genericTypes}>";
-            }
-            else
-            {
-                typeName = type.Name;
-            }
-
-            return typeName;
-        }
-
-        public static string GetGenericTypeName(this object @object)
-        {
-            return @object.GetType().GetGenericTypeName();
-        }
     }
 }

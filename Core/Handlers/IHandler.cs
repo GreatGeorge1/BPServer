@@ -2,26 +2,22 @@
 {
     using BPServer.Core.Attributes;
     using BPServer.Core.Messages;
+    using System;
     using System.Threading.Tasks;
 
-    /// <summary>
-    /// marker
-    /// </summary>
-    public interface IHandler<in TMessage> : IHandler
+    public interface IHandler<in TMessage, in TCommand> : IDisposable
         where TMessage : IMessage
+        where TCommand : ICommand
     {
+        ICommand Command { get; }
+        string SerialPort { get; }
+
+        bool IsCompleted { get; }
+        bool IsWaiting { get; }
+
+        event EventHandler<IHandler<IMessage,ICommand>> Completed;
+        event EventHandler<IHandler<IMessage, ICommand>> Waiting;
         Task Handle(TMessage input);
     }
 
-    public interface IHandler
-    {
-        public byte Route();
-    }
-
-    //public interface IHandler<TMessage,TResponse>
-    //    where TMessage : IMessage
-    //    where TResponse : IMessage
-    //{
-    //    Task<TResponse> Handle(TMessage input);
-    //}
 }

@@ -2,11 +2,8 @@
 {
     using BPServer.Core.Messages;
 
-    public interface IRequestHandler : IHandler<RequestMessage>
-    {
-    }
-
-    public interface IResponseHandler : IHandler<RequestResponseMessage>, IAcknowledgeHandler
+    public interface IRequestHandler<TCommand> : IHandler<RequestMessage,TCommand>
+        where TCommand : ICommand
     {
     }
 }

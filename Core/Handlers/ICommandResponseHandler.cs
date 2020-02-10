@@ -4,7 +4,7 @@
     using BPServer.Core.Messages;
     using System.Threading.Tasks;
 
-    public interface ICommandResponseHandler<TCommand> : IHandler<CommandResponseMessage>
+    public interface ICommandResponseHandler<TCommand> : IHandler<CommandResponseMessage,TCommand>
        where TCommand : ICommand
     {
     }

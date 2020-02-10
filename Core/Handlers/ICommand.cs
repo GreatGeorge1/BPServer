@@ -5,6 +5,6 @@
     /// </summary>
     public interface ICommand
     {
-
+        byte Command { get; }
     }
 }
