@@ -8,6 +8,6 @@ namespace BPServer.Core.Sagas
     {
         void AddSaga(ISaga serverSaga);
         bool TryGet(Guid id, out ISaga saga);
-        bool TryGet(string serialPort, ICommand command, out ISaga saga);
+        bool TryGet(string transportName, ICommand command, out ISaga saga);
     }
 }

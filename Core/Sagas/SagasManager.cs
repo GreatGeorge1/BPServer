@@ -5,8 +5,9 @@ using System.Linq;
 
 namespace BPServer.Core.Sagas
 {
-    public class SagasManager : ISagasManager
+    public class SagasManager : ISagasManager,IDisposable
     {
+        private bool isDisposed;
         protected readonly List<ISaga> _sagas;
         public SagasManager()
         {
@@ -16,7 +17,13 @@ namespace BPServer.Core.Sagas
         protected void OnCompleted(object sender, Guid id)
         {
             var saga = _sagas.First(x => x.Id == id);
-            _sagas.Remove(saga);//TODO save
+            if(_sagas.Remove(saga))//TODO save
+            {
+                saga.Completed -= OnCompleted;
+                saga.RepeatLimitReached -= OnRepeatLimitReached;
+                saga.TimeoutReached -= OnTimeoutReached;
+                saga.Error -= OnError;
+            }
             Console.WriteLine($"Saga Completed: '{saga.Id}', removed");
         }
 
@@ -69,7 +76,7 @@ namespace BPServer.Core.Sagas
         public bool TryGet(string serialPort, ICommand command, out ISaga saga)
         {
             var temp = _sagas
-                .Where(x => x.SerialPort.Equals(serialPort))
+                .Where(x => x.TransportName.Equals(serialPort))
                 .Where(x => x.Command.Command == command.Command)
                 .FirstOrDefault();
             if (temp is null)
@@ -79,6 +86,30 @@ namespace BPServer.Core.Sagas
             }
             saga = temp;
             return true;
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (isDisposed) return;
+            if (_sagas.Any())
+            {
+                foreach(var saga in _sagas)
+                {
+                    saga.Completed -= OnCompleted;
+                    saga.RepeatLimitReached -= OnRepeatLimitReached;
+                    saga.TimeoutReached -= OnTimeoutReached;
+                    saga.Error -= OnError;
+                }
+                _sagas.Clear();
+            }
+
+            isDisposed = true;
         }
     }
 }

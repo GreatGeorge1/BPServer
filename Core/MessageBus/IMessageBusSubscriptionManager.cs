@@ -12,9 +12,9 @@ namespace BPServer.Core.MessageBus
         bool IsEmpty { get; }
         event EventHandler<IAddress> AddressRemoved;
 
-        void AddSubscription<T>(string serialPort)
+        void AddSubscription<T>(string transportName)
             where T : IHandler<IMessage, ICommand>;
-        void RemoveSubscription<T>(string serialPort)
+        void RemoveSubscription<T>(string transportName)
             where T : IHandler<IMessage, ICommand>;
 
         void Clear();
@@ -23,7 +23,7 @@ namespace BPServer.Core.MessageBus
         Type GetCommandTypeByByte(byte input);
 
         bool HasSubscriptionsForAddress(IAddress address);
-        bool HasSubscriptionsForCommand<T>(string serialPort) where T : ICommand;
+        bool HasSubscriptionsForCommand<T>(string transportName) where T : ICommand;
 
     }
 }

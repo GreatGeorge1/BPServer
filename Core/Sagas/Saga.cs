@@ -7,7 +7,7 @@ namespace BPServer.Core.Sagas
 {
     public abstract class Saga : ISaga
     {
-        public string SerialPort { get; protected set; }
+        public string TransportName { get; protected set; }
 
         public ICommand Command { get; protected set; }
 
@@ -53,7 +53,7 @@ namespace BPServer.Core.Sagas
             Id = Guid.NewGuid();
             CreationTime = DateTime.UtcNow;
             RepeatCount = 0;
-            SerialPort = serialPort;
+            TransportName = serialPort;
             Command = command ?? throw new ArgumentNullException(nameof(command));
             Timeout = timeout;
             MaxRepeats = maxRepeats;

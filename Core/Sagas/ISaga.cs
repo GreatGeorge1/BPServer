@@ -7,7 +7,7 @@ using System.Text;
 namespace BPServer.Core.Sagas
 {
     public interface ISaga {
-        string SerialPort { get; }
+        string TransportName { get; }
         ICommand Command { get; }
         Guid Id { get; }
 

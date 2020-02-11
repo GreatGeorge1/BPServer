@@ -1,17 +1,16 @@
 ﻿using BPServer.Core.Handlers;
+using Autofac;
+using BPServer.Core.Messages;
+using BPServer.Core.Transports;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace BPServer.Core.MessageBus
 {
-    using Autofac;
-    using BPServer.Core.Messages;
-    using BPServer.Core.Transports;
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Text;
-    using System.Threading.Tasks;
-
-    public partial class InMemoryMessageBus : IMessageBus
+    public partial class InMemoryMessageBus : IMessageBus, IDisposable
     {
         private readonly string AUTOFAC_SCOPE_NAME = "bpserver_message_bus";
         private readonly ITransportManager _transportManager;
@@ -92,6 +91,29 @@ namespace BPServer.Core.MessageBus
         public void Unsubscribe<T>(string serialPort) where T : IHandler<IMessage, ICommand>
         {
             _subscriptionManager.RemoveSubscription<T>(serialPort);
+        }
+
+        bool disposed = false;
+
+        // Public implementation of Dispose pattern callable by consumers.
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        // Protected implementation of Dispose pattern.
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposed)
+                return;
+
+            if (disposing)
+            {
+                _subscriptionManager.Clear();
+            }
+
+            disposed = true;
         }
     }
 }

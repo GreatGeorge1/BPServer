@@ -6,10 +6,10 @@ namespace BPServer.Core.MessageBus
 
     public interface IMessageBus
     {
-        void Publish(IMessage @message, string serialPort);
-        void Subscribe<T>(string serialPort)
+        void Publish(IMessage @message, string transportName);
+        void Subscribe<T>(string transportName)
             where T : IHandler<IMessage, ICommand>;
-        void Unsubscribe<T>(string serialPort)
+        void Unsubscribe<T>(string transportName)
             where T : IHandler<IMessage, ICommand>;
     }
 }
