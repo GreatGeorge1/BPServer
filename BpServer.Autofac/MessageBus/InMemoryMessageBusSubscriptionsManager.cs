@@ -10,9 +10,17 @@ namespace BPServer.Core.MessageBus
 
     public class InMemoryMessageBusSubscriptionsManager : IMessageBusSubscriptionManager
     {
-        public bool IsEmpty => throw new NotImplementedException();
+        private readonly Dictionary<IAddress, List<IHandler>> _handlers;
+
+        public bool IsEmpty => !_handlers.Any();
 
         public event EventHandler<IAddress> AddressRemoved;
+
+        protected virtual void OnAddressRemoved(IAddress e)
+        {
+            EventHandler<IAddress> handler = AddressRemoved;
+            handler?.Invoke(this, e);
+        }
 
         public void AddSubscription<T>(string serialPort) where T : IHandler<IMessage, ICommand>
         {
@@ -51,6 +59,7 @@ namespace BPServer.Core.MessageBus
 
         public void RemoveSubscription<T>(string serialPort) where T : IHandler<IMessage, ICommand>
         {
+            //OnAddressRemoved(address);
             throw new NotImplementedException();
         }
     }
