@@ -31,7 +31,7 @@ namespace BPServer.Core.Sagas
 
         public IMessage Ack { get; protected set; }
 
-        public IMessage RequestMesssage { get; protected set; }
+        public IMessage RequestMessage { get; protected set; }
 
         public IMessage SentResponse { get; protected set; }
 
@@ -164,7 +164,7 @@ namespace BPServer.Core.Sagas
                 throw new ArgumentNullException(nameof(message));
             }
 
-            RequestMessage = message;
+            this.RequestMessage = message;
         }
 
         public void SetCommandMessage(IMessage message)

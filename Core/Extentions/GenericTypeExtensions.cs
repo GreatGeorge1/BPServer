@@ -1,4 +1,4 @@
-﻿namespace BPServer.Core.Handlers
+﻿namespace BPServer.Core.Extensions
 {
     using System;
     using System.Linq;

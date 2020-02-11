@@ -31,7 +31,7 @@ namespace BPServer.Core.Sagas
         void RepeatIncrement();
 
         #region client
-        IMessage RequestMesssage { get; }
+        IMessage RequestMessage { get; }
         IMessage SentResponse { get; }
         void SetSentResponse(IMessage message);
         void SetRequestMesssage(IMessage message);

@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BPServer.Web", "BPServer.We
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleApp1", "ConsoleApp1\ConsoleApp1.csproj", "{EDDF115A-3853-4498-9FF2-F9444B356641}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BPServer.Autofac", "BpServer.Autofac\BPServer.Autofac.csproj", "{787ECA73-8A29-4856-AF3B-9DDB96D8EE6C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{EDDF115A-3853-4498-9FF2-F9444B356641}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EDDF115A-3853-4498-9FF2-F9444B356641}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EDDF115A-3853-4498-9FF2-F9444B356641}.Release|Any CPU.Build.0 = Release|Any CPU
+		{787ECA73-8A29-4856-AF3B-9DDB96D8EE6C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{787ECA73-8A29-4856-AF3B-9DDB96D8EE6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{787ECA73-8A29-4856-AF3B-9DDB96D8EE6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{787ECA73-8A29-4856-AF3B-9DDB96D8EE6C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

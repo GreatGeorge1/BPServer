@@ -5,19 +5,16 @@
     using System;
     using System.Threading.Tasks;
 
-    public interface IHandler<in TMessage, in TCommand> : IDisposable
+    public interface IHandler<in TMessage, in TCommand> : IHandler
         where TMessage : IMessage
         where TCommand : ICommand
     {
-        ICommand Command { get; }
-        string SerialPort { get; }
+        Task Handle(TMessage @input, IAddress address);
+    }
 
-        bool IsCompleted { get; }
-        bool IsWaiting { get; }
+    public interface IHandler
+    {
 
-        event EventHandler<IHandler<IMessage,ICommand>> Completed;
-        event EventHandler<IHandler<IMessage, ICommand>> Waiting;
-        Task Handle(TMessage input);
     }
 
 }

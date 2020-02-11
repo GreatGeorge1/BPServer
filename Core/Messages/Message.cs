@@ -13,7 +13,7 @@
 
         public ICollection<byte> Body { get; private set; }
 
-        public byte Route { get; private set; }
+        public byte Command { get; private set; }
 
         public MessageType Type { get; protected set; }
 
@@ -30,7 +30,7 @@
 
             Raw = Guard.Argument(message, nameof(message)).NotNull().MinCount(8);
             Guard.Argument(message[0]==0x02).True();
-            Route = message[2];
+            Command = message[2];
             var flag = TypeOf(message, out MessageType type);
             if (flag) Type = type;
             Guard.Argument(IsValidCheckSum(Raw)).True();
@@ -70,7 +70,7 @@
             }
             Raw = raw.ToArray();
             Type = Mtype;
-            this.Route = Route;
+            this.Command = Route;
             BodyXor = xor;
             Body = Value;
         }

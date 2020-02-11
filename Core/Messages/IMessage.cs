@@ -10,7 +10,7 @@
         byte[] Raw { get; }
         byte BodyXor { get; }
         ICollection<byte> Body { get; }
-        byte Route { get; }
+        byte Command { get; }
         MessageType Type { get; }
     }
 }
