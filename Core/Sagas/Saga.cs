@@ -43,17 +43,17 @@ namespace BPServer.Core.Sagas
 
         private Timer _timer;
 
-        protected Saga(string serialPort, ICommand command, TimeSpan timeout, int maxRepeats, bool hasCommandResponse)
+        protected Saga(string transportName, ICommand command, TimeSpan timeout, int maxRepeats, bool hasCommandResponse)
         {
-            if (string.IsNullOrWhiteSpace(serialPort))
+            if (string.IsNullOrWhiteSpace(transportName))
             {
-                throw new ArgumentException("message", nameof(serialPort));
+                throw new ArgumentException("message", nameof(transportName));
             }
 
             Id = Guid.NewGuid();
             CreationTime = DateTime.UtcNow;
             RepeatCount = 0;
-            TransportName = serialPort;
+            TransportName = transportName;
             Command = command ?? throw new ArgumentNullException(nameof(command));
             Timeout = timeout;
             MaxRepeats = maxRepeats;
@@ -64,8 +64,8 @@ namespace BPServer.Core.Sagas
                 _timer.Enabled = true;
                 _timer.Interval = Timeout.TotalMilliseconds;
                 _timer.Elapsed += _timer_Elapsed;
+                _timer.Start();
             }
-            _timer.Start();
         }
 
         private void _timer_Elapsed(object sender, ElapsedEventArgs e)
@@ -100,7 +100,7 @@ namespace BPServer.Core.Sagas
         protected virtual void OnError(Guid e)
         {
             EventHandler<Guid> handler = Error;
-            _timer.Stop();
+            if (Timeout.TotalMilliseconds != 0) _timer.Stop();
             handler?.Invoke(this, e);
         }
 
@@ -138,6 +138,7 @@ namespace BPServer.Core.Sagas
         public void SetCompleted()
         {
             IsCompleted = true;
+            if (Timeout.TotalMilliseconds != 0) _timer.Stop();
             OnCompleted(Id);
         }
 

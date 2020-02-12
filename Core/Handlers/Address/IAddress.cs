@@ -6,6 +6,6 @@ namespace BPServer.Core.Handlers
     public interface IAddress
     {
         IRoute Route { get; }
-        string SerialPort { get; }
+        string TransportName { get; }
     }
 }

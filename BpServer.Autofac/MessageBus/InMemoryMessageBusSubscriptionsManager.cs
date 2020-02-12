@@ -15,6 +15,13 @@ namespace BPServer.Core.MessageBus
         private readonly Dictionary<byte,Type> _commandTypes;
         private readonly Dictionary<byte, Type> _messageTypes;
 
+        public InMemoryMessageBusSubscriptionsManager()
+        {
+            _handlers = new Dictionary<IAddress, HashSet<SubscriptionInfo>>();
+            _commandTypes = new Dictionary<byte, Type>();
+            _messageTypes = new Dictionary<byte, Type>();
+        }
+
         public bool IsEmpty => !_handlers.Any();
 
         public event EventHandler<IAddress> AddressRemoved;
@@ -25,19 +32,22 @@ namespace BPServer.Core.MessageBus
             handler?.Invoke(this, e);
         }
 
-        public void AddSubscription<T>(string transportName) where T : IHandler<IMessage, ICommand>
+        public void AddSubscription<T>(string transportName) where T : IHandler
         {
             if (string.IsNullOrWhiteSpace(transportName)) throw new ArgumentException("message", nameof(transportName));
             var type =typeof(T);
-            var hashset = GetGenericTypeArguments(type);
-            var commandTypes = FindCommandTypes(hashset);
-            if (commandTypes.Count() > 1) throw new ArgumentException($"Handler of type: '{typeof(T)}' has more than one ICommand");
+            var typeSet = GetGenericTypeArguments(type);
+            var commandTypes = FindCommandTypes(typeSet);
+            var messageTypes = FindMessageTypes(typeSet);
+            DoAddSubscription(GetAddresses(commandTypes.Single(), messageTypes, transportName, type));
+        }
 
-            var messageTypes = FindMessageTypes(hashset);
-            var addresses = GetAddresses(commandTypes.Single(), messageTypes, transportName, type);
-            foreach(var item in addresses)
+        private void DoAddSubscription(Dictionary<IAddress, SubscriptionInfo> addresses)
+        {
+            if (addresses is null) throw new ArgumentNullException(nameof(addresses));
+            foreach (var item in addresses)
             {
-                var temp=_handlers.GetValueOrDefault(item.Key);
+                var temp = _handlers.GetValueOrDefault(item.Key);
                 if (temp is null)
                 {
                     var subs = new HashSet<SubscriptionInfo>();
@@ -50,7 +60,8 @@ namespace BPServer.Core.MessageBus
                 }
                 _commandTypes.TryAdd(item.Key.Route.Command, item.Value.CommandType);
                 _messageTypes.TryAdd(item.Key.Route.MessageType, item.Value.MessageType);
-            } 
+            }
+            Console.WriteLine("Handler subscribed");
         }
 
         private IEnumerable<Type> GetGenericTypeArguments(Type type)
@@ -62,7 +73,7 @@ namespace BPServer.Core.MessageBus
         private IEnumerable<Type> FindCommandTypes(IEnumerable<Type> input)
         {
             if (input is null) throw new ArgumentNullException(nameof(input));
-            return input.Where(x => typeof(ICommand).IsAssignableFrom(x) && x.GetInterfaces().Contains(typeof(ICommand)))
+            return input.Where(x => typeof(ICommand).IsAssignableFrom(x) && x.GetInterfaces().Contains(typeof(ICommand)));
         }
 
         private IEnumerable<Type> FindMessageTypes(IEnumerable<Type> input)
@@ -71,7 +82,7 @@ namespace BPServer.Core.MessageBus
             return input.Where(x => typeof(IMessage).IsAssignableFrom(x) && x.GetInterfaces().Contains(typeof(IMessage)));
         }
 
-        private Dictionary<IAddress,SubscriptionInfo> GetAddresses(Type commandType, IEnumerable<Type> messageTypes, string transportName, Type handler)
+        private Dictionary<IAddress, SubscriptionInfo> GetAddresses(Type commandType, IEnumerable<Type> messageTypes, string transportName, Type handler)
         {
             if (commandType is null) throw new ArgumentNullException(nameof(commandType));
             if (messageTypes is null) throw new ArgumentNullException(nameof(messageTypes));
@@ -105,12 +116,16 @@ namespace BPServer.Core.MessageBus
 
         public IEnumerable<SubscriptionInfo> GetHandlersForAddress(IAddress address)
         {
-            var temp = _handlers.GetValueOrDefault(address);
-            if(temp is null)
+            foreach (var item in _handlers.Keys)
             {
-                return default;
+                if (item.TransportName.Equals(address.TransportName)
+                && item.Route.Command == address.Route.Command
+                && item.Route.MessageType == address.Route.MessageType)
+                {
+                    return _handlers.GetValueOrDefault(item);
+                }
             }
-            return temp;
+            return default;
         }
 
         public Type GetMessageTypeByByte(byte input)
@@ -122,12 +137,13 @@ namespace BPServer.Core.MessageBus
 
         public bool HasSubscriptionsForAddress(IAddress address)
         {
-
-            if(_handlers.TryGetValue(address, out HashSet<SubscriptionInfo> subs))
+            foreach(var item in _handlers.Keys)
             {
-                if (subs.Count > 0)
+                if(item.TransportName.Equals(address.TransportName)
+                && item.Route.Command == address.Route.Command 
+                && item.Route.MessageType == address.Route.MessageType)
                 {
-                    return true;
+                    return _handlers.Values.Count > 0;
                 }
             }
             return false;
@@ -143,7 +159,7 @@ namespace BPServer.Core.MessageBus
             var commandByte = typeof(T).GetAttributeValue((CommandByteAttribute cmd) => cmd.Command);
             foreach(var item in _handlers)
             {
-                if(item.Key.SerialPort.Equals(transportName) && item.Key.Route.Command == commandByte)
+                if(item.Key.TransportName.Equals(transportName) && item.Key.Route.Command == commandByte)
                 {
                     return true;
                 }
@@ -151,7 +167,7 @@ namespace BPServer.Core.MessageBus
             return false;
         }
 
-        public void RemoveSubscription<T>(string transportName) where T : IHandler<IMessage, ICommand>
+        public void RemoveSubscription<T>(string transportName) where T : IHandler
         {
 
             //OnAddressRemoved(address);

@@ -4,19 +4,19 @@ namespace BPServer.Core.Handlers
 {
     public class Address : IAddress
     {
-        public Address(IRoute route, string serialPort)
+        public Address(IRoute route, string transportName)
         {
-            if (string.IsNullOrWhiteSpace(serialPort))
+            if (string.IsNullOrWhiteSpace(transportName))
             {
-                throw new ArgumentException("message", nameof(serialPort));
+                throw new ArgumentException("message", nameof(transportName));
             }
 
             Route = route ?? throw new ArgumentNullException(nameof(route));
-            SerialPort = serialPort;
+            TransportName = transportName;
         }
 
         public IRoute Route { get; protected set; }
 
-        public string SerialPort { get; protected set; }
+        public string TransportName { get; protected set; }
     }
 }

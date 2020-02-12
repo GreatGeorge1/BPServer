@@ -13,9 +13,9 @@ namespace BPServer.Core.MessageBus
         event EventHandler<IAddress> AddressRemoved;
 
         void AddSubscription<T>(string transportName)
-            where T : IHandler<IMessage, ICommand>;
+            where T : IHandler;
         void RemoveSubscription<T>(string transportName)
-            where T : IHandler<IMessage, ICommand>;
+            where T : IHandler;
 
         void Clear();
         IEnumerable<SubscriptionInfo> GetHandlersForAddress(IAddress address);

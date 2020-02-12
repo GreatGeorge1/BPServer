@@ -10,14 +10,14 @@ using System.Threading.Tasks;
 
 namespace BPServer.Core.MessageBus
 {
-    public partial class InMemoryMessageBus : IMessageBus, IDisposable
+    public partial class MessageBus : IMessageBus, IDisposable
     {
         private readonly string AUTOFAC_SCOPE_NAME = "bpserver_message_bus";
         private readonly ITransportManager _transportManager;
         private readonly IMessageBusSubscriptionManager _subscriptionManager;
         private readonly ILifetimeScope _autofac;
 
-        public InMemoryMessageBus(ITransportManager transportManager,
+        public MessageBus(ITransportManager transportManager,
             IMessageBusSubscriptionManager subscriptionManager,
             ILifetimeScope autofac)
         {
@@ -25,12 +25,13 @@ namespace BPServer.Core.MessageBus
             _transportManager.MessageReceived += OnMessageReceived;
             _subscriptionManager = subscriptionManager ?? throw new ArgumentNullException(nameof(subscriptionManager));
             _autofac = autofac ?? throw new ArgumentNullException(nameof(autofac));
+            Console.WriteLine($"MessageBus Created");
         }
 
         protected async void OnMessageReceived(object sender, MessageReceivedEventArgs e)
         {
             var serialPort = e.Transport.Name;
-            Debug.WriteLine($"MessageBus OnMessageReceived, TransportName: '{serialPort}'");
+            Console.WriteLine($"MessageBus OnMessageReceived, TransportName: '{serialPort}'");
             await ProcessMessage(e.Message, serialPort);
         }
 
@@ -44,6 +45,7 @@ namespace BPServer.Core.MessageBus
                 using (var scope = _autofac.BeginLifetimeScope(AUTOFAC_SCOPE_NAME))
                 {
                     var subscriptions = _subscriptionManager.GetHandlersForAddress(address);
+                 
                     foreach(var subscription in subscriptions)
                     {
                         var handler = scope.ResolveOptional(subscription.HandlerType);
@@ -83,12 +85,12 @@ namespace BPServer.Core.MessageBus
             transport.PushDataAsync(message);
         }
 
-        public void Subscribe<T>(string serialPort) where T : IHandler<IMessage, ICommand>
+        public void Subscribe<T>(string serialPort) where T : IHandler
         {
             _subscriptionManager.AddSubscription<T>(serialPort);
         }
 
-        public void Unsubscribe<T>(string serialPort) where T : IHandler<IMessage, ICommand>
+        public void Unsubscribe<T>(string serialPort) where T : IHandler
         {
             _subscriptionManager.RemoveSubscription<T>(serialPort);
         }

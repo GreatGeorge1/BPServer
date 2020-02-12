@@ -13,31 +13,36 @@ namespace BPServer.Core.Transports
 
         public event EventHandler<MessageReceivedEventArgs> MessageReceived;
 
+
         public TransportManager()
         {
             _transports = new List<ITransport>();
         }
 
-        protected virtual void OnMessageReceived(MessageReceivedEventArgs e)
+
+        protected void OnMessageReceived(MessageReceivedEventArgs e)
         {
-            EventHandler<MessageReceivedEventArgs> handler = MessageReceived;
-            handler?.Invoke(this, e);
+            MessageReceived?.Invoke(this, e);
+            //Console.WriteLine("+");
         }
 
         protected void OnDataRecieved(object sender, IMessage message)
         {
-            OnMessageReceived(new MessageReceivedEventArgs(message, sender as ITransport));
+            Console.WriteLine("Transportmanager DataReceived");
+            ITransport transport = (ITransport)sender;
+            OnMessageReceived(new MessageReceivedEventArgs(message, transport));
         }
 
         public void AddTransport(ITransport transport)
         {
             if(!(_transports.Find(x => x.Name.Equals(transport.Name)) is null))
             {
-                Debug.WriteLine($"Transport with name: '{transport.Name}' already registered");
+                Console.WriteLine($"Transport with name: '{transport.Name}' already registered");
                 return;
             }
             transport.DataReceived += OnDataRecieved;
             _transports.Add(transport);
+            Console.WriteLine("Transport added");
         }
 
         public ITransport GetTransportByName(string name)

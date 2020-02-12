@@ -8,8 +8,8 @@ namespace BPServer.Core.MessageBus
     {
         void Publish(IMessage @message, string transportName);
         void Subscribe<T>(string transportName)
-            where T : IHandler<IMessage, ICommand>;
+            where T : IHandler;
         void Unsubscribe<T>(string transportName)
-            where T : IHandler<IMessage, ICommand>;
+            where T : IHandler;
     }
 }
