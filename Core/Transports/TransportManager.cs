@@ -43,6 +43,10 @@ namespace BPServer.Core.Transports
         public ITransport GetTransportByName(string name)
         {
             var transport = _transports.FirstOrDefault(x => x.Name.Equals(name));
+            if(transport is null)
+            {
+                return default;
+            }
             return transport;
         }
 

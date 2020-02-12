@@ -1,4 +1,6 @@
-﻿namespace BPServer.Core.Handlers
+﻿using BPServer.Core.Attributes;
+
+namespace BPServer.Core.Handlers
 {
     /// <summary>
     /// marker

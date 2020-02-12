@@ -3,11 +3,11 @@
 namespace BPServer.Core.Attributes
 {
     [System.AttributeUsage(System.AttributeTargets.Class)]
-    public sealed class CommandSubscriptionAttribute : System.Attribute
+    public sealed class CommandByteAttribute : System.Attribute
     {
-        public ICommand Command { get; }
+        public byte Command { get; }
 
-        public CommandSubscriptionAttribute(ICommand command)
+        public CommandByteAttribute(byte command)
         {
             Command = command;
         }
