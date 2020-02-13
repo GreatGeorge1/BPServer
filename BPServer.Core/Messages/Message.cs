@@ -15,7 +15,7 @@
 
         public byte Command { get; private set; }
 
-        public MessageType Type { get; protected set; }
+        public byte Type { get; protected set; }
 
         public byte BodyXor { get; private set; }
 
@@ -31,8 +31,8 @@
             Raw = Guard.Argument(message, nameof(message)).NotNull().MinCount(8);
             Guard.Argument(message[0]==0x02).True();
             Command = message[2];
-            var flag = TypeOf(message, out MessageType type);
-            if (flag) Type = type;
+            //var flag = TypeOf(message, out MessageType type);
+            Type = message[1];
             Guard.Argument(IsValidCheckSum(Raw)).True();
             BodyXor = message[3];
             var length = HighLowToInt(message.ElementAt(4), message.ElementAt(5));
@@ -44,18 +44,18 @@
         {
         }
 
-        protected Message(MessageType Mtype, byte Route, byte[] Value)
+        protected Message(byte Mtype, byte Route, byte[] Value)
             : this(Guid.NewGuid(),Mtype, Route, Value) 
         {
         }
 
-        protected Message(Guid id,MessageType Mtype,byte Route, byte[] Value) 
+        protected Message(Guid id,byte Mtype,byte Route, byte[] Value) 
         {
             Id = id;
             CreationDate = DateTime.UtcNow;
 
             Guard.Argument(Value, nameof(Value)).NotNull().MinCount(2);
-            Guard.Argument(Mtype).Defined();
+            //Guard.Argument(Mtype).Defined();
             var xor = CalCheckSum(Value);
             var raw = new List<byte>(){
                 0x02,
@@ -73,6 +73,20 @@
             this.Command = Route;
             BodyXor = xor;
             Body = Value;
+        }
+
+        public static bool IsValid(byte[] value)
+        {
+            if (value.Length < 8) return false;
+            if (value[0] != 0x02) return false;
+            var lengthBytes = new byte[] { value[4], value[5] };
+            var length = HighLowToInt(value[4], value[5]);
+            var body = value.Skip(6).ToArray();
+            if (body.Length != length) return false;
+            var checksum = value[3];
+            var newChecksum = CalCheckSum(body);
+            if (checksum != newChecksum) return false;
+            return true;
         }
 
         protected static bool IsTypeOf(byte[] message, MessageType type)

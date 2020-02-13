@@ -20,7 +20,7 @@
             }
         }
 
-        public RequestMessage(byte Route, byte[] Value) : base(MessageType.Request, Route, Value)
+        public RequestMessage(byte Route, byte[] Value) : base((byte)MessageType.Request, Route, Value)
         {
         }
 

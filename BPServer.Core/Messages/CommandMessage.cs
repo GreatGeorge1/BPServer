@@ -20,7 +20,7 @@
             }
         }
 
-        public CommandMessage(byte Route, byte[] Value) : base(MessageType.Command, Route, Value)
+        public CommandMessage(byte Route, byte[] Value) : base((byte)MessageType.Command, Route, Value)
         {
         }
     }

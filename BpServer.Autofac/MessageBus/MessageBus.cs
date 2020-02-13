@@ -32,7 +32,7 @@ namespace BPServer.Core.MessageBus
         {
             var serialPort = e.Transport.Name;
             Console.WriteLine($"MessageBus OnMessageReceived, TransportName: '{serialPort}'");
-            await ProcessMessage(e.Message, serialPort);
+            await ProcessMessage(e.Message, serialPort).ConfigureAwait(false);
         }
 
         protected async Task<bool> ProcessMessage(IMessage message, string serialPort)
@@ -60,7 +60,7 @@ namespace BPServer.Core.MessageBus
                         catch(Exception e)
                         {
                             processed = false;
-                            await ExceptionReceivedHandler(new ExceptionReceivedEventArgs(e, concreteType));
+                            await ExceptionReceivedHandler(new ExceptionReceivedEventArgs(e, concreteType)).ConfigureAwait(false);
                         }
                     }
                 }
@@ -79,10 +79,10 @@ namespace BPServer.Core.MessageBus
         }
 
 
-        public void Publish(IMessage message, string serialPort)
+        public  async Task Publish(IMessage message, string serialPort)
         {
             var transport = _transportManager.GetTransportByName(serialPort);
-            transport.PushDataAsync(message);
+            await transport.PushDataAsync(message).ConfigureAwait(false);
         }
 
         public void Subscribe<T>(string serialPort) where T : IHandler

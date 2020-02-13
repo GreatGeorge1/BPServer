@@ -14,7 +14,7 @@
             }
         }
 
-        public CommandResponseMessage(byte Route, byte[] Value) : base(MessageType.CommandResponse, Route, Value)
+        public CommandResponseMessage(byte Route, byte[] Value) : base((byte)MessageType.CommandResponse, Route, Value)
         {
         }
     }

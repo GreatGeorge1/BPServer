@@ -3,15 +3,17 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29728.190
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BPServer.Core", "Core\BPServer.Core.csproj", "{9635DAAC-3005-4D89-BD98-39967A9E9F67}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XUnitTestProject", "XUnitTestProject\XUnitTestProject.csproj", "{93254DEB-22A5-4F54-AC58-F06E57227EF0}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BPServer.Web", "BPServer.Web\BPServer.Web.csproj", "{5F11C358-827C-46F5-A791-23D3DDB7E897}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleApp1", "ConsoleApp1\ConsoleApp1.csproj", "{EDDF115A-3853-4498-9FF2-F9444B356641}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleApp1", "ConsoleApp1\ConsoleApp1.csproj", "{EDDF115A-3853-4498-9FF2-F9444B356641}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BPServer.Autofac", "BpServer.Autofac\BPServer.Autofac.csproj", "{787ECA73-8A29-4856-AF3B-9DDB96D8EE6C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BPServer.Autofac", "BpServer.Autofac\BPServer.Autofac.csproj", "{787ECA73-8A29-4856-AF3B-9DDB96D8EE6C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BPServer.Transports.Serial", "BPServer.Transports.SerialPort\BPServer.Transports.Serial.csproj", "{79210BCC-F750-48E6-A473-C4FC841563D3}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BPServer.Core", "BPServer.Core\BPServer.Core.csproj", "{817FCBD8-0617-49DE-99B5-3977F473B0C7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -19,10 +21,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{9635DAAC-3005-4D89-BD98-39967A9E9F67}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9635DAAC-3005-4D89-BD98-39967A9E9F67}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9635DAAC-3005-4D89-BD98-39967A9E9F67}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9635DAAC-3005-4D89-BD98-39967A9E9F67}.Release|Any CPU.Build.0 = Release|Any CPU
 		{93254DEB-22A5-4F54-AC58-F06E57227EF0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{93254DEB-22A5-4F54-AC58-F06E57227EF0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{93254DEB-22A5-4F54-AC58-F06E57227EF0}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -39,6 +37,14 @@ Global
 		{787ECA73-8A29-4856-AF3B-9DDB96D8EE6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{787ECA73-8A29-4856-AF3B-9DDB96D8EE6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{787ECA73-8A29-4856-AF3B-9DDB96D8EE6C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{79210BCC-F750-48E6-A473-C4FC841563D3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{79210BCC-F750-48E6-A473-C4FC841563D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{79210BCC-F750-48E6-A473-C4FC841563D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{79210BCC-F750-48E6-A473-C4FC841563D3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{817FCBD8-0617-49DE-99B5-3977F473B0C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{817FCBD8-0617-49DE-99B5-3977F473B0C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{817FCBD8-0617-49DE-99B5-3977F473B0C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{817FCBD8-0617-49DE-99B5-3977F473B0C7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

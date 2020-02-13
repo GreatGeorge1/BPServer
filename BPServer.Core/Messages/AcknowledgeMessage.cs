@@ -14,7 +14,7 @@
             }
         }
 
-        public AcknowledgeMessage(byte Route, byte[] Value) : base(MessageType.ACK, Route, Value)
+        public AcknowledgeMessage(byte Route, byte[] Value) : base((byte)MessageType.ACK, Route, Value)
         {
         }
     }

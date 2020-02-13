@@ -14,7 +14,7 @@
             }
         }
 
-        public NotificationMessage(byte Route, byte[] Value) : base(MessageType.Notification, Route, Value)
+        public NotificationMessage(byte Route, byte[] Value) : base((byte)MessageType.Notification, Route, Value)
         {
         }
 

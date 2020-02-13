@@ -10,6 +10,7 @@ using Autofac;
 using BPServer.Core.Transports;
 using BPServer.Core.MessageBus;
 using BPServer.Core.Sagas;
+using BPServer.Autofac;
 
 namespace ConsoleApp1
 {
@@ -19,22 +20,46 @@ namespace ConsoleApp1
         static async Task Main(string[] args)
         {
             var builder = new ContainerBuilder();
-            builder.RegisterInstance(new TransportManager()).As<ITransportManager>();
-            builder.RegisterInstance(new InMemoryMessageBusSubscriptionsManager()).As<IMessageBusSubscriptionManager>();
-            builder.RegisterType<MessageBus>().As<IMessageBus>();
+            builder.RegisterModule<HubModule>();
+
             builder.RegisterInstance(new TestTransport()).As<ITransport>();
-            builder.RegisterInstance(new SagasManager()).As<ISagasManager>();
             builder.RegisterType<CardNotificationHandler>();
             builder.RegisterType<CardCommand>();
+
+            builder.RegisterType<MessageFactory>().SingleInstance();
             var container = builder.Build();
 
+
+
             container.BeginLifetimeScope();
-            var transportManager= container.Resolve<ITransportManager>();
-            var transport = container.Resolve<ITransport>();
-            transportManager.AddTransport(transport);
-            var messageBus=container.Resolve<IMessageBus>();
-            messageBus.Subscribe<CardNotificationHandler>("TestTransport");
-            Console.ReadLine();
+            //var transportManager = container.Resolve<ITransportManager>();
+            //var transport = container.Resolve<ITransport>();
+            //transportManager.AddTransport(transport);
+            //var messageBus = container.Resolve<IMessageBus>();
+            //messageBus.Subscribe<CardNotificationHandler>("TestTransport");
+            //Console.ReadLine();
+
+
+            //var type = typeof(IMessage);
+            //var types = AppDomain.CurrentDomain.GetAssemblies()
+            //    .SelectMany(s => s.GetTypes())
+            //    .Where(p => type.IsAssignableFrom(p) && !p.IsAbstract && !p.IsInterface);
+            //foreach(var item in types)
+            //{
+            //    Console.WriteLine(item.Name);
+            //}
+
+            var factory = container.Resolve<MessageFactory>();
+            var len = Message.IntToHighLow(2);
+            var body = new byte[] { 0x01, 0x00 };
+            var mm = new List<byte> { 0x02, 0xd5, 0xc7 };
+            mm.Add(Message.CalCheckSum(body));
+            mm.AddRange(Message.IntToHighLow(body.Length));
+            mm.AddRange(body);
+            factory.CreateMessage(mm.ToArray(), out IMessage message);
+            Console.WriteLine(message.GetType().Name);
+            var mtype = message.GetType().GetAttributeValue((MessageTypeAttribute m) => m.MessageType);
+            Console.WriteLine(BitConverter.ToString(new byte[] { mtype}));
         }
     }
 
@@ -55,10 +80,12 @@ namespace ConsoleApp1
     {
         private readonly ISagasManager _sagasManager;
         private readonly CardCommand _cardCommand;
-        public CardNotificationHandler(ISagasManager sagasManager, CardCommand command)
+        private readonly IMessageBus _messageBus;
+        public CardNotificationHandler(ISagasManager sagasManager, CardCommand command, IMessageBus messageBus)
         {
             _sagasManager = sagasManager ?? throw new ArgumentNullException(nameof(sagasManager));
             _cardCommand = command ?? throw new ArgumentNullException(nameof(command));
+            _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
         }
         public async Task Handle(NotificationMessage input, IAddress address)
         {
@@ -72,6 +99,7 @@ namespace ConsoleApp1
             {
                 _sagasManager.AddSaga(new SomeSaga(address.TransportName, _cardCommand, TimeSpan.Zero, 3, false));
                 Console.WriteLine("saga created");
+                await _messageBus.Publish(input, address.TransportName).ConfigureAwait(false);
             }
 
         }

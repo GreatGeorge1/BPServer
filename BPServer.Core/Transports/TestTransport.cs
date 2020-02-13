@@ -46,6 +46,7 @@ namespace BPServer.Core.Transports
 
         public Task PushDataAsync(IMessage input)
         {
+            Console.WriteLine("Data pushed");
             return Task.CompletedTask;
         }
     }

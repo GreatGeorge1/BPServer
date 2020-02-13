@@ -11,6 +11,6 @@
         byte BodyXor { get; }
         ICollection<byte> Body { get; }
         byte Command { get; }
-        MessageType Type { get; }
+        byte Type { get; }
     }
 }

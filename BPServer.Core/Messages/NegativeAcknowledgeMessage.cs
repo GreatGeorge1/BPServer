@@ -14,7 +14,7 @@
             }
         }
 
-        public NegativeAcknowledgeMessage(byte Route, byte[] Value) : base(MessageType.NACK, Route, Value)
+        public NegativeAcknowledgeMessage(byte Route, byte[] Value) : base((byte)MessageType.NACK, Route, Value)
         {
         }
 
