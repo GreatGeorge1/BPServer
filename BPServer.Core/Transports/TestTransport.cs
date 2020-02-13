@@ -1,4 +1,5 @@
 ﻿using BPServer.Core.Messages;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -7,8 +8,10 @@ namespace BPServer.Core.Transports
 {
     public class TestTransport : ITransport
     {
-        public TestTransport()
+        private readonly ILogger log;
+        public TestTransport(ILogger logger)
         {
+            log = logger ?? throw new ArgumentNullException(nameof(logger));
             Start();
         }
         private async Task Start()
@@ -24,7 +27,7 @@ namespace BPServer.Core.Transports
             {
                 await Task.Delay(TimeSpan.FromSeconds(3));
                 OnDataReceived(message);
-               // Console.WriteLine("Test mesage pushed");
+               //log.Error("Test mesage pushed");
             }
         }
 
@@ -46,7 +49,7 @@ namespace BPServer.Core.Transports
 
         public Task PushDataAsync(IMessage input)
         {
-            Console.WriteLine("Data pushed");
+            log.Verbose("Data pushed");
             return Task.CompletedTask;
         }
     }

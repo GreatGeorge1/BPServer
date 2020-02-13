@@ -1,6 +1,7 @@
 ﻿using BPServer.Core.Messages;
 using BPServer.Core.Transports;
 using BPServer.Transports;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -19,8 +20,9 @@ namespace BPServer.Autofac.Serial
         public bool IsRS485 { get; protected set; }
         private SerialPort stream;
         private readonly SemaphoreSlim semaphore = new SemaphoreSlim(1);
+        private readonly ILogger log;
 
-        public SerialPortTransport(MessageFactory messageFactory,string serialPort, bool isRS485)
+        public SerialPortTransport(MessageFactory messageFactory, string serialPort, bool isRS485, ILogger logger)
         {
             if (string.IsNullOrWhiteSpace(serialPort))
             {
@@ -30,6 +32,7 @@ namespace BPServer.Autofac.Serial
             MessageFactory = messageFactory ?? throw new ArgumentNullException(nameof(messageFactory));
             Name = serialPort;
             IsRS485 = isRS485;
+            log = logger ?? throw new ArgumentNullException(nameof(logger));
             Init();
         }
 
@@ -37,8 +40,7 @@ namespace BPServer.Autofac.Serial
         {
             if (!PortHelpers.PortNameExists(Name))
             {
-                //Logger.LogCritical($"{port.PortName} not exists");
-                Console.WriteLine($"{Name} not exists");
+                log.Error($"Port: '{Name}' not exists");
                 //throw new Exception($"{port.PortName} not exists");
                 return false;
             }
@@ -62,50 +64,43 @@ namespace BPServer.Autofac.Serial
                 stream.Handshake = Handshake.None;
                 stream.RtsEnable = true;
                 stream.DtrEnable = true;
-                //Logger.LogInformation($"Port {port.PortName} in RS485 mode");
-                Console.WriteLine($"Port {Name} in RS485 mode");
+                log.Verbose($"Port {Name} in RS485 mode");
             }
 
             stream.Open();
             if (!stream.IsOpen)
             {
-                //Logger.LogCritical($"Error opening serial port {port.PortName}");
-                Console.WriteLine($"Error opening serial port {Name}");
+                log.Error($"Error opening serial port {Name}");
                 //throw new Exception($"Error opening serial port {port.PortName}");
                 return false;
             }
-            //Logger.LogInformation($"Port {port.PortName} open");
-            Console.WriteLine($"Port {Name} open");
+            log.Information($"Port {Name} open");
             if (stream == null)
             {
-                //Logger.LogCritical($"No serial port {port.PortName}");
-                Console.WriteLine($"No serial port {Name}");
+                log.Error($"No serial port {Name}");
                 // throw new Exception($"No serial port {port.PortName}");
                 return false;
             }
             if (stream.CtsHolding)
             {
-                //Logger.LogInformation($"Cts detected {port.PortName}");
-                Console.WriteLine($"Cts detected {Name}");
+                log.Verbose($"Cts detected {Name}");
             }
             else
             {
-                //Logger.LogInformation($"Cts NOT detected {Name}");
-                Console.WriteLine($"Cts NOT detected {Name}");
+                log.Verbose($"Cts NOT detected {Name}");
             }
-            //Logger.LogInformation($"Port listener started: {Name}");
-            Console.WriteLine($"Port listener started: {Name}");
+            log.Information($"Port listener started: {Name}");
             return true;
         }
 
         private void OnStreamPinChanged(object sender, SerialPinChangedEventArgs e)
         {
-            Console.WriteLine($"On port: '{Name}' pin changed.");
+            log.Verbose($"On port: '{Name}' pin changed.");
         }
 
         private void OnStreamErrorReceived(object sender, SerialErrorReceivedEventArgs e)
         {
-            Console.WriteLine($"On port: '{Name}' ERROR recieved.");
+            log.Warning($"On port: '{Name}' ERROR recieved.");
         }
 
         private async void OnStreamDataReceived(object sender, SerialDataReceivedEventArgs e)
@@ -121,8 +116,7 @@ namespace BPServer.Autofac.Serial
             {
                 if (sw.ElapsedMilliseconds >= 1000)
                 {
-                    //Logger.LogWarning("ReadTimeout");
-                    Console.WriteLine("ReadTimeout");
+                    log.Warning($"ReadTimeout on '{Name}'");
                     ok = false;
                     break;
                 }
@@ -156,8 +150,7 @@ namespace BPServer.Autofac.Serial
             {
                 if (sw.ElapsedMilliseconds >= 1000)
                 {
-                    //Logger.LogWarning("ReadTimeout");
-                    Console.WriteLine("ReadTimeout");
+                    log.Warning($"ReadTimeout on '{Name}'");
                     ok = false;
                     break;
                 }
@@ -211,34 +204,34 @@ namespace BPServer.Autofac.Serial
                 {
                     var res = bytes.ToArray();
                     string str = BitConverter.ToString(res);
-                    Console.WriteLine(str);
+                    log.Verbose($"{Name}: '{str}'");
                     if (MessageFactory.CreateMessage(res, out IMessage message))
                     {
                         OnDataReceived(message);
                     }
                     else
                     {
-                        Console.WriteLine($"Message Factory failed create message");
+                        log.Warning($"{Name}: Message Factory failed create message");
                     }
 
                 }
                 else
                 {
-                    Console.WriteLine($"r:error, bytes:'{BitConverter.ToString(bytes.ToArray())}'");
+                    log.Warning($"r:error, bytes:'{BitConverter.ToString(bytes.ToArray())}'");
                     //Logger.LogWarning($"r:error, bytes:'{BitConverter.ToString(bytes.ToArray())}'");
                 }
             }
             catch (IOException ex)
             {
-                Console.WriteLine(ex.ToString());
+                log.Error($"{Name}: '{ex.ToString()}'");
             }
             catch (System.TimeoutException ex)
             {
-                Console.WriteLine("r:timeout");
+                log.Verbose($"{Name}: r:timeout");
             }
             catch (InvalidOperationException ex)
             {
-                Console.WriteLine(ex.ToString());
+                log.Error($"{Name}: '{ex.ToString()}'");
             }
             semaphore.Release();
         }
@@ -283,12 +276,11 @@ namespace BPServer.Autofac.Serial
                     }
                     var bytes = stream.BytesToWrite;
                     var size = stream.WriteBufferSize;
-                    Console.WriteLine($"wrote to port {Name}: {message}, bytes {bytes}, buff_size {size}");
+                    log.Verbose($"wrote to port {Name}: {message}, bytes {bytes}, buff_size {size}");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"ex {Name}");
-                    Console.WriteLine(ex.ToString());
+                    log.Error($"Push data ex: {Name}, {ex.ToString()}");
                     if (IsRS485 && stream.RtsEnable != true)
                     {
                         await Task.Delay(TimeSpan.FromMilliseconds(50));
@@ -311,7 +303,7 @@ namespace BPServer.Autofac.Serial
             }
             else
             {
-                Console.WriteLine($"Cannot write to port: {Name}, port closed");
+                log.Error($"Cannot write to port: {Name}, port closed");
                 return;
             }
             return;

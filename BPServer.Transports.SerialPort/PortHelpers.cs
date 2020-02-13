@@ -32,7 +32,7 @@ namespace BPServer.Transports
                     if (dev.StartsWith("/dev/ttyS") || dev.StartsWith("/dev/ttyUSB") || dev.StartsWith("/dev/ttyACM") || dev.StartsWith("/dev/ttyAMA"))
                     {
                         serial_ports.Add(dev);
-                        Console.WriteLine("Serial list: {0}", dev);
+                        //Console.WriteLine("Serial list: {0}", dev);
                     }
                 }
             }

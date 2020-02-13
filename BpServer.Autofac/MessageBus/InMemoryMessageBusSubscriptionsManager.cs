@@ -5,6 +5,7 @@ namespace BPServer.Core.MessageBus
     using BPServer.Core.Attributes;
     using BPServer.Core.Extentions;
     using BPServer.Core.Messages;
+    using Serilog;
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -14,12 +15,19 @@ namespace BPServer.Core.MessageBus
         private readonly Dictionary<IAddress, HashSet<SubscriptionInfo>> _handlers;
         private readonly Dictionary<byte,Type> _commandTypes;
         private readonly Dictionary<byte, Type> _messageTypes;
+        private readonly ILogger log;
 
-        public InMemoryMessageBusSubscriptionsManager()
+        public InMemoryMessageBusSubscriptionsManager(ILogger logger)
         {
+            if (logger is null)
+            {
+                throw new ArgumentNullException(nameof(logger));
+            }
+
             _handlers = new Dictionary<IAddress, HashSet<SubscriptionInfo>>();
             _commandTypes = new Dictionary<byte, Type>();
             _messageTypes = new Dictionary<byte, Type>();
+            log = logger;
         }
 
         public bool IsEmpty => !_handlers.Any();
@@ -53,6 +61,7 @@ namespace BPServer.Core.MessageBus
                     var subs = new HashSet<SubscriptionInfo>();
                     subs.Add(item.Value);
                     _handlers.Add(item.Key, subs);
+                    log.Information("Subscribed '{@Handler}' on '{@Address}'", item.Value.HandlerType.Name,item.Value.Address);
                 }
                 else
                 {
@@ -61,7 +70,7 @@ namespace BPServer.Core.MessageBus
                 _commandTypes.TryAdd(item.Key.Route.Command, item.Value.CommandType);
                 _messageTypes.TryAdd(item.Key.Route.MessageType, item.Value.MessageType);
             }
-            Console.WriteLine("Handler subscribed");
+          
         }
 
         private IEnumerable<Type> GetGenericTypeArguments(Type type)

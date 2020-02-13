@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Threading.Tasks;
+using Serilog;
 
 namespace BPServer.Core.MessageBus
 {
@@ -16,22 +17,25 @@ namespace BPServer.Core.MessageBus
         private readonly ITransportManager _transportManager;
         private readonly IMessageBusSubscriptionManager _subscriptionManager;
         private readonly ILifetimeScope _autofac;
+        private readonly ILogger log;
 
         public MessageBus(ITransportManager transportManager,
             IMessageBusSubscriptionManager subscriptionManager,
-            ILifetimeScope autofac)
+            ILifetimeScope autofac,
+            ILogger logger)
         {
             _transportManager = transportManager ?? throw new ArgumentNullException(nameof(transportManager));
             _transportManager.MessageReceived += OnMessageReceived;
             _subscriptionManager = subscriptionManager ?? throw new ArgumentNullException(nameof(subscriptionManager));
             _autofac = autofac ?? throw new ArgumentNullException(nameof(autofac));
-            Console.WriteLine($"MessageBus Created");
+            log = logger ?? throw new ArgumentNullException(nameof(logger));
+            log.Information("MessageBus Created");
         }
 
         protected async void OnMessageReceived(object sender, MessageReceivedEventArgs e)
         {
             var serialPort = e.Transport.Name;
-            Console.WriteLine($"MessageBus OnMessageReceived, TransportName: '{serialPort}'");
+            log.Verbose($"MessageBus OnMessageReceived, TransportName: '{serialPort}'");
             await ProcessMessage(e.Message, serialPort).ConfigureAwait(false);
         }
 
@@ -73,7 +77,7 @@ namespace BPServer.Core.MessageBus
             var ex = e.Exception;
             var context = e.ExceptionReceivedContext;
 
-            Console.WriteLine(ex.ToString(), "ERROR handling message: {ExceptionMessage} - Context: {@ExceptionContext}", ex.Message, context.FullName);
+            log.Warning(ex.ToString(), "ERROR handling message: {ExceptionMessage} - Context: {@ExceptionContext}", ex.Message, context.FullName);
 
             return Task.CompletedTask;
         }

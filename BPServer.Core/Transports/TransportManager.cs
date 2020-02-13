@@ -1,4 +1,5 @@
 ﻿using BPServer.Core.Messages;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,10 +13,11 @@ namespace BPServer.Core.Transports
         protected readonly List<ITransport> _transports;
 
         public event EventHandler<MessageReceivedEventArgs> MessageReceived;
+        private readonly ILogger log;
 
-
-        public TransportManager()
+        public TransportManager(ILogger logger)
         {
+            log = logger ?? throw new ArgumentNullException(nameof(logger));
             _transports = new List<ITransport>();
         }
 
@@ -28,7 +30,7 @@ namespace BPServer.Core.Transports
 
         protected void OnDataRecieved(object sender, IMessage message)
         {
-            Console.WriteLine("Transportmanager DataReceived");
+            log.Verbose("Transportmanager DataReceived");
             ITransport transport = (ITransport)sender;
             OnMessageReceived(new MessageReceivedEventArgs(message, transport));
         }
@@ -37,12 +39,12 @@ namespace BPServer.Core.Transports
         {
             if(!(_transports.Find(x => x.Name.Equals(transport.Name)) is null))
             {
-                Console.WriteLine($"Transport with name: '{transport.Name}' already registered");
+                log.Warning($"Transport with name: '{transport.Name}' already registered");
                 return;
             }
             transport.DataReceived += OnDataRecieved;
             _transports.Add(transport);
-            Console.WriteLine("Transport added");
+            log.Verbose("Transport added");
         }
 
         public ITransport GetTransportByName(string name)

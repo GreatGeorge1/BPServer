@@ -1,4 +1,5 @@
 ﻿using BPServer.Core.Handlers;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,8 +10,10 @@ namespace BPServer.Core.Sagas
     {
         private bool isDisposed;
         protected readonly List<ISaga> _sagas;
-        public SagasManager()
+        private readonly ILogger log;
+        public SagasManager(ILogger logger)
         {
+            log = logger ?? throw new ArgumentNullException(nameof(logger));
             _sagas = new List<ISaga>();;
         }
 
@@ -24,19 +27,19 @@ namespace BPServer.Core.Sagas
                 saga.TimeoutReached -= OnTimeoutReached;
                 saga.Error -= OnError;
             }
-            Console.WriteLine($"Saga Completed: '{saga.Id}', removed");
+            log.Information($"Saga Completed: '{saga.Id}', removed");
         }
 
         protected void OnError(object sender, Guid id)
         {
-            Console.WriteLine($"Saga Error: '{id}'");
+            log.Warning($"Saga Error: '{id}'");
             var saga = _sagas.First(x => x.Id == id);
             saga.RepeatIncrement();
         }
 
         protected void OnTimeoutReached(object sender, Guid id)
         {
-            Console.WriteLine($"Saga Timeout: '{id}'");
+            log.Warning($"Saga Timeout: '{id}'");
             var saga = _sagas.First(x => x.Id == id);
             if (saga.IsCompleted)
             {
@@ -47,7 +50,7 @@ namespace BPServer.Core.Sagas
 
         protected void OnRepeatLimitReached(object sender, Guid id)
         {
-            Console.WriteLine($"Saga RepeatLimitReached: '{id}', removed");
+            log.Error($"Saga RepeatLimitReached: '{id}', removed");
             var saga = _sagas.First(x => x.Id == id);
             _sagas.Remove(saga);
         }

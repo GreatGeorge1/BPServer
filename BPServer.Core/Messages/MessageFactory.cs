@@ -7,7 +7,7 @@ using System.Text;
 
 namespace BPServer.Core.Messages
 {
-    public class MessageFactory
+    public class MessageFactory : IMessageFactory
     {
         private readonly Dictionary<byte, Type> messageTypes;
         public MessageFactory()
@@ -19,7 +19,7 @@ namespace BPServer.Core.Messages
             messageTypes = new Dictionary<byte, Type>();
             foreach (var item in types)
             {
-                var key=item.GetAttributeValue((MessageTypeAttribute mtype) => mtype.MessageType);
+                var key = item.GetAttributeValue((MessageTypeAttribute mtype) => mtype.MessageType);
                 messageTypes.TryAdd(key, item);
             }
         }
@@ -30,9 +30,9 @@ namespace BPServer.Core.Messages
             if (Message.IsValid(input))
             {
                 var type = messageTypes.GetValueOrDefault(input[1]);
-                if(!(type is null))
+                if (!(type is null))
                 {
-                    message = (IMessage)Activator.CreateInstance(type,new object[] { input });
+                    message = (IMessage)Activator.CreateInstance(type, new object[] { input });
                     return true;
                 }
             }

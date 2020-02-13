@@ -11,6 +11,8 @@ using BPServer.Core.Transports;
 using BPServer.Core.MessageBus;
 using BPServer.Core.Sagas;
 using BPServer.Autofac;
+using BPServer.Transports;
+using System.IO.Ports;
 
 namespace ConsoleApp1
 {
@@ -22,22 +24,20 @@ namespace ConsoleApp1
             var builder = new ContainerBuilder();
             builder.RegisterModule<HubModule>();
 
-            builder.RegisterInstance(new TestTransport()).As<ITransport>();
+            builder.RegisterType<TestTransport>().As<ITransport>().SingleInstance();
             builder.RegisterType<CardNotificationHandler>();
             builder.RegisterType<CardCommand>();
-
-            builder.RegisterType<MessageFactory>().SingleInstance();
             var container = builder.Build();
 
 
 
             container.BeginLifetimeScope();
-            //var transportManager = container.Resolve<ITransportManager>();
-            //var transport = container.Resolve<ITransport>();
-            //transportManager.AddTransport(transport);
-            //var messageBus = container.Resolve<IMessageBus>();
-            //messageBus.Subscribe<CardNotificationHandler>("TestTransport");
-            //Console.ReadLine();
+            var transportManager = container.Resolve<ITransportManager>();
+            var transport = container.Resolve<ITransport>();
+            transportManager.AddTransport(transport);
+            var messageBus = container.Resolve<IMessageBus>();
+            messageBus.Subscribe<CardNotificationHandler>("TestTransport");
+            Console.ReadLine();
 
 
             //var type = typeof(IMessage);
@@ -49,17 +49,30 @@ namespace ConsoleApp1
             //    Console.WriteLine(item.Name);
             //}
 
-            var factory = container.Resolve<MessageFactory>();
-            var len = Message.IntToHighLow(2);
-            var body = new byte[] { 0x01, 0x00 };
-            var mm = new List<byte> { 0x02, 0xd5, 0xc7 };
-            mm.Add(Message.CalCheckSum(body));
-            mm.AddRange(Message.IntToHighLow(body.Length));
-            mm.AddRange(body);
-            factory.CreateMessage(mm.ToArray(), out IMessage message);
-            Console.WriteLine(message.GetType().Name);
-            var mtype = message.GetType().GetAttributeValue((MessageTypeAttribute m) => m.MessageType);
-            Console.WriteLine(BitConverter.ToString(new byte[] { mtype}));
+            //var factory = container.Resolve<IMessageFactory>();
+            //var len = Message.IntToHighLow(2);
+            //var body = new byte[] { 0x01, 0x00 };
+            //var mm = new List<byte> { 0x02, 0xd5, 0xc7 };
+            //mm.Add(Message.CalCheckSum(body));
+            //mm.AddRange(Message.IntToHighLow(body.Length));
+            //mm.AddRange(body);
+            //factory.CreateMessage(mm.ToArray(), out IMessage message);
+            //Console.WriteLine(message.GetType().Name);
+            //var mtype = message.GetType().GetAttributeValue((MessageTypeAttribute m) => m.MessageType);
+            //Console.WriteLine(BitConverter.ToString(new byte[] { mtype}));
+            //string[] ports;
+            //if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+            //{
+            //    ports = SerialPort.GetPortNames();
+            //}else
+            //{
+            //    ports = PortHelpers.GetPortNames();
+            //}   
+
+            //foreach (var item in ports)
+            //{
+            //    Console.WriteLine(item);
+            //}
         }
     }
 
