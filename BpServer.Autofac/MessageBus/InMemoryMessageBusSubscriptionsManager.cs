@@ -1,10 +1,10 @@
-﻿using BPServer.Core.Handlers;
-
-namespace BPServer.Core.MessageBus
+﻿namespace BPServer.Core.MessageBus
 {
-    using BPServer.Core.Attributes;
     using BPServer.Core.Extentions;
-    using BPServer.Core.Messages;
+    using BPServer.Core.MessageBus.Attributes;
+    using BPServer.Core.MessageBus.Handlers;
+    using BPServer.Core.MessageBus.Handlers.Address;
+    using BPServer.Core.MessageBus.Messages;
     using Serilog;
     using System;
     using System.Collections.Generic;

@@ -1,7 +1,4 @@
-﻿using BPServer.Core.Attributes;
-using BPServer.Core.Handlers;
-using BPServer.Core.Messages;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -13,6 +10,10 @@ using BPServer.Core.Sagas;
 using BPServer.Autofac;
 using BPServer.Transports;
 using System.IO.Ports;
+using BPServer.Core.MessageBus.Messages;
+using BPServer.Core.MessageBus.Handlers.Address;
+using BPServer.Core.MessageBus.Handlers;
+using BPServer.Core.MessageBus.Attributes;
 
 namespace ConsoleApp1
 {
@@ -28,8 +29,6 @@ namespace ConsoleApp1
             builder.RegisterType<CardNotificationHandler>();
             builder.RegisterType<CardCommand>();
             var container = builder.Build();
-
-
 
             container.BeginLifetimeScope();
             var transportManager = container.Resolve<ITransportManager>();

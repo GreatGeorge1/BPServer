@@ -1,4 +1,4 @@
-﻿using BPServer.Core.Messages;
+﻿using BPServer.Core.MessageBus.Messages;
 using System;
 using System.Text;
 using System.Threading.Tasks;

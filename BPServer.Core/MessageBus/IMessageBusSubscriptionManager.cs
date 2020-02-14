@@ -1,12 +1,11 @@
-﻿using BPServer.Core.Handlers;
+﻿using BPServer.Core.MessageBus.Handlers;
+using BPServer.Core.MessageBus.Handlers.Address;
+using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace BPServer.Core.MessageBus
 {
-    using BPServer.Core.Messages;
-    using System;
-    using System.Collections.Generic;
-    using System.Text;
-
     public interface IMessageBusSubscriptionManager
     {
         bool IsEmpty { get; }

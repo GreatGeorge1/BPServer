@@ -2,7 +2,7 @@
 {
     using System;
 
-    public partial class MessageBus
+    public partial class SerialMessageBus
     {
         public class ExceptionReceivedEventArgs
         {

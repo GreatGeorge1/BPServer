@@ -1,4 +1,4 @@
-﻿using BPServer.Core.Messages;
+﻿using BPServer.Core.MessageBus.Messages;
 using System;
 
 namespace BPServer.Core.Transports

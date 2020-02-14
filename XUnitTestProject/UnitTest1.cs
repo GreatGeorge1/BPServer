@@ -2,7 +2,7 @@ using System;
 using Xunit;
 using BPServer.Core;
 using BPServer.Core.Exceptions;
-using BPServer.Core.Messages;
+using BPServer.Core.MessageBus.Messages;
 
 namespace XUnitTestProject
 {

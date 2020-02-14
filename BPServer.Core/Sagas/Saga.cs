@@ -1,5 +1,5 @@
-﻿using BPServer.Core.Handlers;
-using BPServer.Core.Messages;
+﻿using BPServer.Core.MessageBus.Handlers;
+using BPServer.Core.MessageBus.Messages;
 using System;
 using System.Timers;
 

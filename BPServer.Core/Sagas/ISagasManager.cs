@@ -1,4 +1,4 @@
-﻿using BPServer.Core.Handlers;
+﻿using BPServer.Core.MessageBus.Handlers;
 using System;
 using System.Text;
 

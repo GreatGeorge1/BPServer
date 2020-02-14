@@ -1,8 +1,7 @@
-﻿using BPServer.Core.Handlers;
-
-namespace BPServer.Core.MessageBus
+﻿namespace BPServer.Core.MessageBus
 {
-    using BPServer.Core.Messages;
+    using BPServer.Core.MessageBus.Handlers;
+    using BPServer.Core.MessageBus.Messages;
     using System.Threading.Tasks;
 
     public interface IMessageBus

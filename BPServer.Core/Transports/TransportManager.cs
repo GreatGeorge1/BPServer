@@ -1,4 +1,4 @@
-﻿using BPServer.Core.Messages;
+﻿using BPServer.Core.MessageBus.Messages;
 using Serilog;
 using System;
 using System.Collections.Generic;

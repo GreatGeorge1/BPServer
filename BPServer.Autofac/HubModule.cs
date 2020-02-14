@@ -1,6 +1,6 @@
 ﻿using Autofac;
 using BPServer.Core.MessageBus;
-using BPServer.Core.Messages;
+using BPServer.Core.MessageBus.Messages;
 using BPServer.Core.Sagas;
 using BPServer.Core.Transports;
 using Serilog;
@@ -16,7 +16,7 @@ namespace BPServer.Autofac
         {
             builder.RegisterType<TransportManager>().As<ITransportManager>().SingleInstance();
             builder.RegisterType<InMemoryMessageBusSubscriptionsManager>().As<IMessageBusSubscriptionManager>().SingleInstance();
-            builder.RegisterType<MessageBus>().As<IMessageBus>().SingleInstance();
+            builder.RegisterType<SerialMessageBus>().As<IMessageBus>().SingleInstance();
             builder.RegisterType<SagasManager>().As<ISagasManager>().SingleInstance();
             builder.RegisterType<MessageFactory>().As<IMessageFactory>().SingleInstance();
             Log.Logger = new LoggerConfiguration()
