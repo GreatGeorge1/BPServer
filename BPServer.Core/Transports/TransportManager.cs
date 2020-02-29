@@ -13,6 +13,8 @@ namespace BPServer.Core.Transports
         protected readonly List<ITransport> _transports;
 
         public event EventHandler<MessageReceivedEventArgs> MessageReceived;
+        public event EventHandler<TransportAddedEventArgs> TransportAdded;
+
         private readonly ILogger log;
 
         public TransportManager(ILogger logger)
@@ -21,6 +23,10 @@ namespace BPServer.Core.Transports
             _transports = new List<ITransport>();
         }
 
+        protected void OnTransportAdded(TransportAddedEventArgs e)
+        {
+            TransportAdded?.Invoke(this, e);
+        }
 
         protected void OnMessageReceived(MessageReceivedEventArgs e)
         {
@@ -45,6 +51,7 @@ namespace BPServer.Core.Transports
             transport.DataReceived += OnDataRecieved;
             _transports.Add(transport);
             log.Verbose("Transport added");
+            OnTransportAdded(new TransportAddedEventArgs(transport.Name, transport.GetType()));
         }
 
         public ITransport GetTransportByName(string name)

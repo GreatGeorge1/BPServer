@@ -62,6 +62,7 @@ namespace BPServer.Core.Sagas
             serverSaga.TimeoutReached += OnTimeoutReached;
             serverSaga.Error += OnError;
             _sagas.Add(serverSaga);
+            log.Debug($"Saga added: '{serverSaga.Id}'");
         }
 
         public bool TryGet(Guid id, out ISaga saga)
@@ -113,6 +114,37 @@ namespace BPServer.Core.Sagas
             }
 
             isDisposed = true;
+        }
+
+        public bool HasSagas(string transportName)
+        {
+            bool flag = false;
+            foreach(var item in _sagas)
+            {
+                if (item.TransportName.Equals(transportName))
+                {
+                    flag = true;
+                    break;
+                }
+            }
+            return flag;
+        }
+
+        public bool TryGetSagas(string transportName, out ICollection<ISaga> sagas)
+        {
+            sagas = new List<ISaga>();
+            foreach (var item in _sagas)
+            {
+                if (item.TransportName.Equals(transportName))
+                {
+                    sagas.Add(item);
+                }
+            }
+            if (sagas.Count == 0)
+            {
+                return false;
+            }return true;
+           
         }
     }
 }

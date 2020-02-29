@@ -53,32 +53,39 @@ namespace BPServer.Core.MessageBus
                  
                     foreach(var subscription in subscriptions)
                     {
-                        var handler = scope.ResolveOptional(subscription.HandlerType);
-                        if (handler is null) continue;
-                        var messageType = _subscriptionManager.GetMessageTypeByByte((byte)message.Type);
-                        var commandType = _subscriptionManager.GetCommandTypeByByte(message.Command);
-                        var concreteType = typeof(IHandler<,>).MakeGenericType(new Type[] { messageType, commandType });
+                        log.Debug($"ProcessMessage foreach, transport: '{serialPort}'");
                         try
                         {
+                            var handler = scope.Resolve(subscription.HandlerType);
+                            if (handler is null) continue;
+                            var messageType = _subscriptionManager.GetMessageTypeByByte((byte)message.Type);
+                            var commandType = _subscriptionManager.GetCommandTypeByByte(message.Command);
+                            var concreteType = typeof(IHandler<,>).MakeGenericType(new Type[] { messageType, commandType });
                             await (Task)concreteType.GetMethod("Handle").Invoke(handler, new object[] { message, address });
                         }
                         catch(Exception e)
                         {
                             processed = false;
-                            await ExceptionReceivedHandler(new ExceptionReceivedEventArgs(e, concreteType)).ConfigureAwait(false);
+                            await ExceptionReceivedHandler(new ExceptionReceivedEventArgs(e)).ConfigureAwait(false);
                         }
                     }
                 }
-               
+
+            }
+            else
+            {
+                log.Debug($"MessageBus OnMessageReceived, TransportName: '{serialPort}', No Subscription");
             }
             return processed;
         }
         private Task ExceptionReceivedHandler(ExceptionReceivedEventArgs e)
         {
             var ex = e.Exception;
-            var context = e.ExceptionReceivedContext;
+            //var context = e.ExceptionReceivedContext;
 
-            log.Warning(ex.ToString(), "ERROR handling message: {ExceptionMessage} - Context: {@ExceptionContext}", ex.Message, context.FullName);
+            log.Warning(ex.ToString(), "ERROR handling message: {ExceptionMessage} - Context: {@ExceptionContext}", ex.Message 
+                //context.FullName
+                );
 
             return Task.CompletedTask;
         }

@@ -67,8 +67,14 @@
                 {
                     temp.Add(item.Value);
                 }
-                _commandTypes.TryAdd(item.Key.Route.Command, item.Value.CommandType);
-                _messageTypes.TryAdd(item.Key.Route.MessageType, item.Value.MessageType);
+                if(!_commandTypes.TryAdd(item.Key.Route.Command, item.Value.CommandType))
+                {
+                    log.Debug("tryadd command failed on '{@CommandType}'", item.Value.CommandType);
+                }
+                if(!_messageTypes.TryAdd(item.Key.Route.MessageType, item.Value.MessageType))
+                {
+                    log.Debug("tryadd message failed on '{@MessageType}'", item.Value.MessageType);
+                }
             }
           
         }

@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.Net.Http.Headers;
 
 namespace BPServer.Web.Controllers
 {
@@ -22,6 +23,23 @@ namespace BPServer.Web.Controllers
         public AuthenticateController(UserManager<ApplicationUser> userManager)
         {
             this.userManager = userManager;
+        }
+
+        [HttpOptions("login")]
+        //[SwaggerResponse(StatusCodes.Status200OK, "The allowed HTTP methods.")]
+        public IActionResult Options(string tenantId)
+        {
+            this.HttpContext.Response.Headers.AppendCommaSeparatedValues(
+                HeaderNames.Allow,
+                //HttpMethods.Delete,
+                //HttpMethods.Get,
+                //HttpMethods.Head,
+                HttpMethods.Options,
+               // HttpMethods.Patch,
+                HttpMethods.Post
+                //HttpMethods.Put
+                );
+            return this.Ok();
         }
 
         [HttpPost]

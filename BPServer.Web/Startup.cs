@@ -80,7 +80,14 @@ namespace BPServer.Web
             {
                 app.UseHsts();
             }
-
+            app.UseCors(conf => 
+            {
+                conf.WithOrigins("http://localhost:3000", "https://localhost:3000", "http://localhost:5000", "https://localhost:5001");
+                conf.AllowAnyMethod();
+                conf.AllowAnyHeader();
+                conf.AllowCredentials();
+ 
+            });
             SeedDB.Initialize(app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope().ServiceProvider);
 
             app.UseHttpsRedirection();

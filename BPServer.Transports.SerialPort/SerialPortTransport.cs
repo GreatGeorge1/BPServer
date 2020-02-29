@@ -21,8 +21,9 @@ namespace BPServer.Autofac.Serial
         private SerialPort stream;
         private readonly SemaphoreSlim semaphore = new SemaphoreSlim(1);
         private readonly ILogger log;
+        private bool write = false;
 
-        public SerialPortTransport(MessageFactory messageFactory, string serialPort, bool isRS485, ILogger logger)
+        public SerialPortTransport(IMessageFactory messageFactory, string serialPort, bool isRS485, ILogger logger)
         {
             if (string.IsNullOrWhiteSpace(serialPort))
             {
@@ -47,8 +48,8 @@ namespace BPServer.Autofac.Serial
             stream = new SerialPort(Name)
             {
                 BaudRate = 115200,
-                ReadTimeout = 500,
-                WriteTimeout = 500,
+                //ReadTimeout = 500,
+                //WriteTimeout = 500,
                 Parity = Parity.None,
                 StopBits = StopBits.One,
                 DataBits = 8,
@@ -114,7 +115,7 @@ namespace BPServer.Autofac.Serial
             list = new List<byte>();
             do
             {
-                if (sw.ElapsedMilliseconds >= 1000)
+                if (sw.ElapsedMilliseconds >= TimeSpan.FromSeconds(1).TotalMilliseconds)
                 {
                     log.Warning($"ReadTimeout on '{Name}'");
                     ok = false;
@@ -133,7 +134,7 @@ namespace BPServer.Autofac.Serial
             } while (list.Count <= 6);
             if (list.Count == 6)
             {
-                return true;
+                ok=true;
             }
             return ok;
         }
@@ -177,6 +178,7 @@ namespace BPServer.Autofac.Serial
         {
             bool ok = true;
             Stopwatch sw = new Stopwatch();
+            log.Debug($"Semahpore on '{Name}'");
             await semaphore.WaitAsync();
             try
             {
@@ -184,6 +186,10 @@ namespace BPServer.Autofac.Serial
                 {
                     stream.RtsEnable = true;
                     await Task.Delay(TimeSpan.FromMilliseconds(50));
+                }
+                if(write != false)
+                {
+                    log.Debug($"Write is true on read, '{Name}'");
                 }
                 sw.Start();
                 var bytes = new List<byte>();
@@ -198,6 +204,10 @@ namespace BPServer.Autofac.Serial
                     if (ok)
                     {
                         bytes.AddRange(body);
+                    }
+                    else
+                    {
+                        log.Warning($"Serial failed to read body");
                     }
                 }
                 if (ok)
@@ -236,7 +246,7 @@ namespace BPServer.Autofac.Serial
             semaphore.Release();
         }
 
-        private readonly MessageFactory MessageFactory;
+        private readonly IMessageFactory MessageFactory;
         public string Name { get; protected set; }
 
         public event EventHandler<IMessage> DataReceived;
@@ -260,6 +270,7 @@ namespace BPServer.Autofac.Serial
             if (stream.IsOpen)
             {
                 await semaphore.WaitAsync();
+                write = true;
                 try
                 {
                     if (IsRS485)
@@ -274,6 +285,7 @@ namespace BPServer.Autofac.Serial
                         stream.RtsEnable = true;
                         //await Task.Delay(TimeSpan.FromMilliseconds(50));
                     }
+                    write = false;
                     var bytes = stream.BytesToWrite;
                     var size = stream.WriteBufferSize;
                     log.Verbose($"wrote to port {Name}: {message}, bytes {bytes}, buff_size {size}");
@@ -298,6 +310,7 @@ namespace BPServer.Autofac.Serial
                         stream.RtsEnable = true;
                         //await Task.Delay(TimeSpan.FromMilliseconds(50));
                     }
+                    write = false;
                 }
                 semaphore.Release();
             }
