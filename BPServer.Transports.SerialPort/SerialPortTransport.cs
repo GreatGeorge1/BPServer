@@ -21,7 +21,7 @@ namespace BPServer.Autofac.Serial
         private SerialPort stream;
         private readonly SemaphoreSlim semaphore = new SemaphoreSlim(1);
         private readonly ILogger log;
-        private bool write = false;
+        private int delay => 200;
 
         public SerialPortTransport(IMessageFactory messageFactory, string serialPort, bool isRS485, ILogger logger)
         {
@@ -48,12 +48,12 @@ namespace BPServer.Autofac.Serial
             stream = new SerialPort(Name)
             {
                 BaudRate = 115200,
-                //ReadTimeout = 500,
-                //WriteTimeout = 500,
+                ReadTimeout = 1000,
+                WriteTimeout = 1000,
                 Parity = Parity.None,
                 StopBits = StopBits.One,
                 DataBits = 8,
-                Encoding = Encoding.UTF8,
+                Encoding = Encoding.ASCII,
                 NewLine = "\r\n"
             };
             stream.DataReceived += OnStreamDataReceived;
@@ -104,44 +104,36 @@ namespace BPServer.Autofac.Serial
             log.Warning($"On port: '{Name}' ERROR recieved.");
         }
 
-        private async void OnStreamDataReceived(object sender, SerialDataReceivedEventArgs e)
-        {
-            await ReadMessageAsync();
-        }
+        private async void OnStreamDataReceived(object sender, SerialDataReceivedEventArgs e) => await ReadMessageAsync();
+        
 
         private bool ReadHeader(Stopwatch sw, out ICollection<byte> list)
         {
-            bool ok = true;
             list = new List<byte>();
             do
             {
                 if (sw.ElapsedMilliseconds >= TimeSpan.FromSeconds(1).TotalMilliseconds)
                 {
-                    log.Warning($"ReadTimeout on '{Name}'");
-                    ok = false;
-                    break;
+                    log.Warning($"ReadTimeout header on '{Name}'");
+                    return false;
                 }
                 byte _byte = 0;
-                if (stream.BytesToRead > 0)
+                try
                 {
                     _byte = (byte)stream.ReadByte();
                 }
-                else
+                catch (Exception e)
                 {
+                    log.Error($"{Name}: on head '{e.ToString()}'");
                     continue;
                 }
                 list.Add(_byte);
-            } while (list.Count <= 6);
-            if (list.Count == 6)
-            {
-                ok=true;
-            }
-            return ok;
+            } while (list.Count < 6);
+            return true;
         }
 
         private bool ReadBody(Stopwatch sw, int length, out ICollection<byte> list)
         {
-            bool ok = true;
             int len = length;
             int k = len;
 
@@ -149,86 +141,72 @@ namespace BPServer.Autofac.Serial
             sw.Reset();
             do
             {
-                if (sw.ElapsedMilliseconds >= 1000)
+                if (sw.ElapsedMilliseconds >= TimeSpan.FromSeconds(1).TotalMilliseconds)
                 {
-                    log.Warning($"ReadTimeout on '{Name}'");
-                    ok = false;
-                    break;
+                    log.Warning($"ReadTimeout body on '{Name}'");
+                    return false;
                 }
                 byte _byte = 0;
                 try
                 {
                     _byte = (byte)stream.ReadByte();
                 }
-                catch
+                catch(Exception e )
                 {
+                    log.Error($"{Name}: on body '{e.ToString()}'");
                     continue;
                 }
                 list.Add(_byte);
                 k--;
-            } while (stream.BytesToRead > 0 && k > 0);
-            if (length == list.Count)
-            {
-                return true;
-            }
-            return ok;
+            } while (stream.BytesToRead > 0 && 
+                k > 0);
+            return true;
         }
 
         private async Task ReadMessageAsync()
         {
-            bool ok = true;
-            Stopwatch sw = new Stopwatch();
-            log.Debug($"Semahpore on '{Name}'");
-            await semaphore.WaitAsync();
             try
             {
+                await semaphore.WaitAsync();
+                Stopwatch sw = new Stopwatch();
+                log.Debug($"Semaphore on '{Name}'");
                 if (IsRS485 && stream.RtsEnable != true)
                 {
                     stream.RtsEnable = true;
-                    await Task.Delay(TimeSpan.FromMilliseconds(50));
-                }
-                if(write != false)
-                {
-                    log.Debug($"Write is true on read, '{Name}'");
+                    //await Task.Delay(TimeSpan.FromMilliseconds(50));
                 }
                 sw.Start();
                 var bytes = new List<byte>();
-                ok = ReadHeader(sw, out ICollection<byte> list);
-                if (ok)
+                if (ReadHeader(sw, out ICollection<byte> list))
                 {
                     bytes.AddRange(list);
-                    ok = ReadBody(sw, Message.HighLowToInt(
+                    if (ReadBody(sw, Message.HighLowToInt(
                         list.ElementAt(4),
                         list.ElementAt(5)
-                        ), out ICollection<byte> body);
-                    if (ok)
+                        ), out ICollection<byte> body))
                     {
                         bytes.AddRange(body);
-                    }
-                    else
-                    {
-                        log.Warning($"Serial failed to read body");
-                    }
-                }
-                if (ok)
-                {
-                    var res = bytes.ToArray();
-                    string str = BitConverter.ToString(res);
-                    log.Verbose($"{Name}: '{str}'");
-                    if (MessageFactory.CreateMessage(res, out IMessage message))
-                    {
-                        OnDataReceived(message);
-                    }
-                    else
-                    {
-                        log.Warning($"{Name}: Message Factory failed create message");
-                    }
 
+                        var res = bytes.ToArray();
+                        string str = BitConverter.ToString(res);
+                        log.Verbose($"{Name}: '{str}'");
+                        if (MessageFactory.CreateMessage(res, out IMessage message))
+                        {
+                            OnDataReceived(message);
+                        }
+                        else
+                        {
+                            log.Warning($"{Name}: Message Factory failed create message");
+                        }  
+                    }
+                    else
+                    {
+                        log.Warning($"Serial failed to read body, bytes:'{BitConverter.ToString(bytes.ToArray())}'");
+                    }
                 }
                 else
                 {
-                    log.Warning($"r:error, bytes:'{BitConverter.ToString(bytes.ToArray())}'");
-                    //Logger.LogWarning($"r:error, bytes:'{BitConverter.ToString(bytes.ToArray())}'");
+                    log.Warning($"Serial failed to read header, bytes:'{BitConverter.ToString(bytes.ToArray())}'");
                 }
             }
             catch (IOException ex)
@@ -243,7 +221,14 @@ namespace BPServer.Autofac.Serial
             {
                 log.Error($"{Name}: '{ex.ToString()}'");
             }
-            semaphore.Release();
+            catch(Exception ex)
+            {
+                log.Error($"{Name}: '{ex.ToString()}'");
+            }
+            finally
+            {
+                semaphore.Release();
+            }
         }
 
         private readonly IMessageFactory MessageFactory;
@@ -261,31 +246,49 @@ namespace BPServer.Autofac.Serial
 
         public async Task PushDataAsync(IMessage input)
         {
+            await Task.Delay(TimeSpan.FromMilliseconds(delay));
+            await DoPushDataAsync(input);
+        }
+
+        public async Task DoPushDataAsync(IMessage input)
+        {
             if (input is null)
             {
                 throw new ArgumentNullException(nameof(input));
             }
             var message = input.Raw;
-
             if (stream.IsOpen)
             {
-                await semaphore.WaitAsync();
-                write = true;
+                log.Verbose($"{Name}: btr '{stream.BytesToRead}'");
+                do
+                {
+                    await Task.Delay(TimeSpan.FromMilliseconds(10));
+                } while (stream.BytesToRead != 0);
                 try
                 {
+                    await semaphore.WaitAsync();
                     if (IsRS485)
                     {
                         stream.RtsEnable = false;
-                        await Task.Delay(TimeSpan.FromMilliseconds(50));
-                    }
-                    stream.Write(message, 0, message.Length);
-                    if (IsRS485)
-                    {
-                        await Task.Delay(TimeSpan.FromMilliseconds(50));
-                        stream.RtsEnable = true;
                         //await Task.Delay(TimeSpan.FromMilliseconds(50));
                     }
-                    write = false;
+                    stream.Write(message, 0, message.Length);
+                    int k = 0;
+                    do
+                    {
+                        if (k == 100)
+                        {
+                            break;
+                        }
+                        await Task.Delay(TimeSpan.FromMilliseconds(10));
+                        k++;
+                        continue;
+                    } while (stream.BytesToWrite != 0);
+                    if (IsRS485)
+                    {
+                        //await Task.Delay(TimeSpan.FromMilliseconds(50)); 
+                        stream.RtsEnable = true;
+                    }
                     var bytes = stream.BytesToWrite;
                     var size = stream.WriteBufferSize;
                     log.Verbose($"wrote to port {Name}: {message}, bytes {bytes}, buff_size {size}");
@@ -295,24 +298,20 @@ namespace BPServer.Autofac.Serial
                     log.Error($"Push data ex: {Name}, {ex.ToString()}");
                     if (IsRS485 && stream.RtsEnable != true)
                     {
-                        await Task.Delay(TimeSpan.FromMilliseconds(50));
                         stream.RtsEnable = true;
                         //await Task.Delay(TimeSpan.FromMilliseconds(50));
                     }
-                    //throw new Exception(ex.Message);
                     return;
                 }
                 finally
                 {
                     if (IsRS485 && stream.RtsEnable != true)
                     {
-                        await Task.Delay(TimeSpan.FromMilliseconds(50));
                         stream.RtsEnable = true;
-                        //await Task.Delay(TimeSpan.FromMilliseconds(50));
                     }
-                    write = false;
+                    semaphore.Release();
                 }
-                semaphore.Release();
+              
             }
             else
             {

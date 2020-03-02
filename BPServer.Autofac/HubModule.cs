@@ -21,11 +21,11 @@ namespace BPServer.Autofac
             builder.RegisterType<MessageFactory>().As<IMessageFactory>().SingleInstance();
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Verbose()
-                .Enrich.WithMachineName()
-                .Enrich.WithProperty("BPServer", "LocalHub")
+               // .Enrich.WithMachineName()
+               // .Enrich.WithProperty("BPServer", "LocalHub")
                 .WriteTo.Console()
-                .WriteTo.File("logs\\myapp.txt", rollingInterval: RollingInterval.Day)
-                .WriteTo.Seq("http://localhost:5341/")
+               // .WriteTo.File("logs\\myapp.txt", rollingInterval: RollingInterval.Day)
+              //  .WriteTo.Seq("http://localhost:5341/")
                 //.WriteTo.Telegram(
                 // "981598351:AAEN_nMTBvfi8Wl7rPaZygpv-fXi0F4B8y0",
                 //  "383328078")

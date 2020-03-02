@@ -27,14 +27,18 @@ namespace ConsoleApp1
         static IMessageFactory Factory = new MessageFactory();
         static async void OnTransportAdded(object sender,  TransportAddedEventArgs e)
         {
-            await Task.Delay(TimeSpan.FromSeconds(2));
-            for(int i = 0; i < 20; i++)
+            await Task.Delay(TimeSpan.FromMilliseconds(100));
+            for (int i = 0; i < 100; i++)
             {
-                await Task.Delay(TimeSpan.FromSeconds(2));
+                //await Task.Delay(TimeSpan.FromMilliseconds(1000));
                 Console.WriteLine("OnTransportAdded handler");
                 SagaManager.AddSaga(new PingSaga(e.TransportName, new PingCommand(), TimeSpan.Zero, 3, false));
-                await Bus.Publish(new CommandMessage(0xD4, new byte[] { 0x00, 0x01 }), e.TransportName);
-              //  Console.WriteLine("OnTransportAdded message pushed");
+                await Bus.Publish(new CommandMessage(0xD4, new byte[] { 0x00, 0x01, 0x0A }), e.TransportName);
+                //  Console.WriteLine("OnTransportAdded message pushed");
+            }
+            if (SagaManager.TryGetSagas("/dev/ttyS1", out ICollection<ISaga> sagas))
+            {
+                Console.WriteLine($"not complete:'{sagas.Count}' out of '100'");
             }
         }
 
