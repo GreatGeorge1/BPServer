@@ -94,6 +94,11 @@ namespace BPServer.Core.MessageBus
         public  async Task Publish(IMessage message, string serialPort)
         {
             var transport = _transportManager.GetTransportByName(serialPort);
+            if(transport is null)
+            {
+                log.Warning($"{serialPort} not exist in TrasnportManager");
+                return;
+            }
             await transport.PushDataAsync(message).ConfigureAwait(false);
         }
 

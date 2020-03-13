@@ -14,7 +14,7 @@ namespace BPServer.Core.MessageBus.Messages
         {
             var type = typeof(IMessage);
             var types = AppDomain.CurrentDomain.GetAssemblies()
-                .SelectMany(s => s.GetTypes())
+                .SelectMany(s => s.GetForwardedTypes())
                 .Where(p => type.IsAssignableFrom(p) && !p.IsAbstract && !p.IsInterface).ToHashSet();
             messageTypes = new Dictionary<byte, Type>();
             foreach (var item in types)

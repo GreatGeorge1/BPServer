@@ -23,7 +23,7 @@ namespace BPServer.Autofac
                 .MinimumLevel.Verbose()
                // .Enrich.WithMachineName()
                // .Enrich.WithProperty("BPServer", "LocalHub")
-                .WriteTo.Console()
+                .WriteTo.Async(a=>a.Console())
                // .WriteTo.File("logs\\myapp.txt", rollingInterval: RollingInterval.Day)
               //  .WriteTo.Seq("http://localhost:5341/")
                 //.WriteTo.Telegram(
