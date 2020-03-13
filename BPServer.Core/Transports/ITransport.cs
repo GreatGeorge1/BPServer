@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace BPServer.Core.Transports
 {
-    public interface ITransport
+    public interface ITransport : IDisposable
     {
         string Name { get; }
         Task PushDataAsync(IMessage input);

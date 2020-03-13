@@ -9,6 +9,7 @@ namespace BPServer.Core.Transports
     public class TestTransport : ITransport
     {
         private readonly ILogger log;
+        private bool isDisposed;
         public TestTransport(ILogger logger)
         {
             log = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -23,7 +24,7 @@ namespace BPServer.Core.Transports
             mm.AddRange(Message.IntToHighLow(body.Length));
             mm.AddRange(body);
             var message = new NotificationMessage(mm.ToArray());
-            while (true)
+            while (!isDisposed)
             {
                 await Task.Delay(TimeSpan.FromSeconds(3));
                 OnDataReceived(message);
@@ -51,6 +52,17 @@ namespace BPServer.Core.Transports
         {
             log.Verbose("Data pushed");
             return Task.CompletedTask;
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        protected virtual void Dispose(bool disposing)
+        {
+            if (isDisposed) return;
+            isDisposed = true;
         }
     }
 }

@@ -15,10 +15,11 @@ using System.Threading.Tasks;
 
 namespace BPServer.Autofac.Serial
 {
-    public class SerialPortTransport : ITransport
+    public class SerialPortTransport : ITransport, IDisposable
     {
         public bool IsRS485 { get; protected set; }
         private SerialPort stream;
+        private bool isDisposed;
         private readonly SemaphoreSlim semaphore = new SemaphoreSlim(1);
         private readonly ILogger log;
         private int delay => 200;
@@ -319,6 +320,21 @@ namespace BPServer.Autofac.Serial
                 return;
             }
             return;
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (isDisposed) return;
+            semaphore.Wait();
+            stream.Close();
+            semaphore.Dispose();
+            isDisposed = true;
         }
     }
 }

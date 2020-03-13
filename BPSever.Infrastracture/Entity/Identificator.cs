@@ -24,7 +24,7 @@ namespace BPSever.Infrastracture.Entity
 
     public class CardIdentificator : Identificator
     {
-
+         
     }
 
     public class FingerIdentificator : Identificator

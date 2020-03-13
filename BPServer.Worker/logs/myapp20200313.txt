@@ -1,0 +1,13 @@
+2020-03-13 18:30:56.793 +02:00 [DBG] Hosting starting
+2020-03-13 18:30:57.642 +02:00 [INF] Application started. Press Ctrl+C to shut down.
+2020-03-13 18:30:57.645 +02:00 [INF] Hosting environment: Production
+2020-03-13 18:30:57.650 +02:00 [INF] Content root path: D:\Projects\experiment\BPServer\BPServer.Worker\bin\Debug\netcoreapp3.1\
+2020-03-13 18:30:57.652 +02:00 [DBG] Hosting started
+2020-03-13 18:35:47.942 +02:00 [DBG] Hosting starting
+2020-03-13 18:35:48.467 +02:00 [INF] Application started. Press Ctrl+C to shut down.
+2020-03-13 18:35:48.472 +02:00 [INF] Hosting environment: Production
+2020-03-13 18:35:48.475 +02:00 [INF] Content root path: D:\Projects\experiment\BPServer\BPServer.Worker\bin\Debug\netcoreapp3.1\
+2020-03-13 18:35:48.479 +02:00 [DBG] Hosting started
+2020-03-13 18:36:05.872 +02:00 [INF] Application is shutting down...
+2020-03-13 18:36:05.878 +02:00 [DBG] Hosting stopping
+2020-03-13 18:36:05.882 +02:00 [DBG] Hosting stopped
