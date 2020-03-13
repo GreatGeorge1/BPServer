@@ -12,7 +12,8 @@
     <PackageReference Include="MassTransit.Autofac" Version="6.2.1" />
     <PackageReference Include="MassTransit.RabbitMQ" Version="6.2.1" />
     <PackageReference Include="MassTransit.SerilogIntegration" Version="5.5.6" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="3.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="3.1.2" />
+    <PackageReference Include="Polly" Version="7.2.0" />
     <PackageReference Include="Serilog.Extensions.Hosting" Version="3.0.0" />
     <PackageReference Include="Serilog.Sinks.Async" Version="1.4.0" />
   </ItemGroup>
@@ -21,6 +22,7 @@
     <ProjectReference Include="..\BpServer.Autofac\BPServer.Autofac.csproj" />
     <ProjectReference Include="..\BPServer.Core\BPServer.Core.csproj" />
     <ProjectReference Include="..\BPServer.Transports.SerialPort\BPServer.Transports.Serial.csproj" />
+    <ProjectReference Include="..\BPSever.Infrastracture\BPSever.Infrastracture.csproj" />
     <ProjectReference Include="..\ConsoleApp1\ConsoleApp1.csproj" />
   </ItemGroup>
 </Project>

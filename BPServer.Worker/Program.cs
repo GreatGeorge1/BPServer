@@ -8,7 +8,9 @@ using Autofac.Extensions.DependencyInjection;
 using BPServer.Autofac;
 using BPServer.Core.MessageBus.Command;
 using BPServer.Worker.ExternalCommunication.Masstransit;
+using BPSever.Infrastracture.MessageTypes;
 using ConsoleApp1;
+using GreenPipes;
 using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -95,12 +97,16 @@ namespace BPServer.Worker
                         mqcfg.Username("guest");
 
                     });
+                    cfg.ConfigureEndpoints(context);
                     cfg.ReceiveEndpoint("test_consumer", ec => 
                     {
+                        ec.PrefetchCount = 16;
+                        ec.UseMessageRetry(r => r.Immediate(5));
                         ec.ConfigureConsumer<TestConsumer>(context);
                     });
                    
                 }));
+                x.AddRequestClient<TestRequest>();
             });
             return builder;
         }

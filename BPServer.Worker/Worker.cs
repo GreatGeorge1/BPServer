@@ -10,6 +10,7 @@ using BPServer.Core.MessageBus.Messages;
 using BPServer.Core.Sagas;
 using BPServer.Core.Transports;
 using BPServer.Worker.ExternalCommunication.Masstransit;
+using BPSever.Infrastracture.MessageTypes;
 using ConsoleApp1;
 using MassTransit;
 using Microsoft.Extensions.Hosting;
@@ -55,7 +56,7 @@ namespace BPServer.Worker
             //_transportManager.AddTransport(transport);
 
             await _masstransitBc.StartAsync();
-            for (int i = 0; i < 100; i++)
+            for (int i = 0; i < 10; i++)
             {
                 await _publishEndpoint.Publish<TestEvent>(new
                 {
