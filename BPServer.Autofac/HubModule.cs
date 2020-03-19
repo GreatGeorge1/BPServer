@@ -14,18 +14,24 @@ namespace BPServer.Autofac
     {
         protected override void Load(ContainerBuilder builder)
         {
-            builder.RegisterType<TransportManager>().As<ITransportManager>().SingleInstance();
+           // builder.RegisterType<TransportManager>().As<ITransportManager>()
+              //  .SingleInstance()
+              //  .PropertiesAutowired(PropertyWiringOptions.AllowCircularDependencies); ;
             builder.RegisterType<InMemoryMessageBusSubscriptionsManager>().As<IMessageBusSubscriptionManager>().SingleInstance();
-            builder.RegisterType<SerialMessageBus>().As<IMessageBus>().SingleInstance();
+            builder.RegisterType<SerialMessageBus>()
+                .As<IMessageBus>()
+                .SingleInstance()
+                .PropertiesAutowired(PropertyWiringOptions.AllowCircularDependencies);
             builder.RegisterType<SagasManager>().As<ISagasManager>().SingleInstance();
             builder.RegisterType<MessageFactory>().As<IMessageFactory>().SingleInstance();
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Verbose()
-               // .Enrich.WithMachineName()
-               // .Enrich.WithProperty("BPServer", "LocalHub")
-                .WriteTo.Async(a=>a.Console())
-               // .WriteTo.File("logs\\myapp.txt", rollingInterval: RollingInterval.Day)
-              //  .WriteTo.Seq("http://localhost:5341/")
+                  // .Enrich.WithMachineName()
+                  // .Enrich.WithProperty("BPServer", "LocalHub")
+                  //  .WriteTo.Async(a=>a.Console())
+                  .WriteTo.Console()
+                // .WriteTo.File("logs\\myapp.txt", rollingInterval: RollingInterval.Day)
+                //  .WriteTo.Seq("http://localhost:5341/")
                 //.WriteTo.Telegram(
                 // "981598351:AAEN_nMTBvfi8Wl7rPaZygpv-fXi0F4B8y0",
                 //  "383328078")

@@ -1,5 +1,5 @@
 ﻿using BPServer.Core.MessageBus.Messages;
-using Serilog;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -7,20 +7,18 @@ using System.Linq;
 
 namespace BPServer.Core.Transports
 {
-    public class TransportManager : ITransportManager, IDisposable
+    public class TransportManager : ITransportManager
     {
-        private bool isDisposed;
-        protected readonly List<ITransport> _transports;
+        protected readonly List<ITransport> _transportSubscriptions;
 
-        public event EventHandler<MessageReceivedEventArgs> MessageReceived;
         public event EventHandler<TransportAddedEventArgs> TransportAdded;
 
         private readonly ILogger log;
 
-        public TransportManager(ILogger logger)
+        public TransportManager(ILogger<TransportManager> logger)
         {
             log = logger ?? throw new ArgumentNullException(nameof(logger));
-            _transports = new List<ITransport>();
+            _transportSubscriptions = new List<ITransport>();
         }
 
         protected void OnTransportAdded(TransportAddedEventArgs e)
@@ -28,36 +26,22 @@ namespace BPServer.Core.Transports
             TransportAdded?.Invoke(this, e);
         }
 
-        protected void OnMessageReceived(MessageReceivedEventArgs e)
-        {
-            MessageReceived?.Invoke(this, e);
-            //Console.WriteLine("+");
-        }
-
-        protected void OnDataRecieved(object sender, IMessage message)
-        {
-            log.Verbose("Transportmanager DataReceived");
-            ITransport transport = (ITransport)sender;
-            OnMessageReceived(new MessageReceivedEventArgs(message, transport));
-        }
-
         public void AddTransport(ITransport transport)
         {
-            if(!(_transports.Find(x => x.Name.Equals(transport.Name)) is null))
+            if (!(_transportSubscriptions.Find(x => x.Name.Equals(transport.Name)) is null))
             {
-                log.Warning($"Transport with name: '{transport.Name}' already registered");
+                log.LogWarning($"Transport with name: '{transport.Name}' already registered");
                 return;
             }
-            transport.DataReceived += OnDataRecieved;
-            _transports.Add(transport);
-            log.Verbose("Transport added");
+            _transportSubscriptions.Add(transport);
+            log.LogDebug("Transport added");
             OnTransportAdded(new TransportAddedEventArgs(transport.Name, transport.GetType()));
         }
 
         public ITransport GetTransportByName(string name)
         {
-            var transport = _transports.FirstOrDefault(x => x.Name.Equals(name));
-            if(transport is null)
+            var transport = _transportSubscriptions.FirstOrDefault(x => x.Name.Equals(name));
+            if (transport is null)
             {
                 return null;
             }
@@ -66,31 +50,28 @@ namespace BPServer.Core.Transports
 
         public void RemoveTransport(ITransport transport)
         {
-            if (_transports.Remove(transport))
+            foreach(var item in _transportSubscriptions)
             {
-                transport.DataReceived -= OnDataRecieved;
-            }
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (isDisposed) return;
-            if (_transports.Any())
-            {
-                foreach(var transport in _transports)
+                if (item.Name.Equals(transport.Name))
                 {
-                    transport.DataReceived -= OnDataRecieved;
+                    //var unsub = item.Unsubscribe;
+                    _transportSubscriptions.Remove(item);
+                    //unsub.Dispose();
                 }
-                _transports.Clear();
             }
+        }
 
-            isDisposed = true;
+        public void Clear()
+        {
+            if (_transportSubscriptions.Any())
+            {
+                _transportSubscriptions.Clear();
+            }
+        }
+
+        public IEnumerable<ITransport> GetTransports()
+        {
+            return _transportSubscriptions.AsReadOnly();
         }
     }
 }

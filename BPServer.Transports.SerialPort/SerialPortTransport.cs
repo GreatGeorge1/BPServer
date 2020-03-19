@@ -1,7 +1,8 @@
-﻿using BPServer.Core.MessageBus.Messages;
+﻿using BPServer.Core.MessageBus;
+using BPServer.Core.MessageBus.Messages;
 using BPServer.Core.Transports;
 using BPServer.Transports;
-using Serilog;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -15,16 +16,20 @@ using System.Threading.Tasks;
 
 namespace BPServer.Autofac.Serial
 {
-    public class SerialPortTransport : ITransport, IDisposable
+    public class SerialPortTransport : ITransport
     {
         public bool IsRS485 { get; protected set; }
+        public string Name { get; protected set; }
         private SerialPort stream;
         private bool isDisposed;
         private readonly SemaphoreSlim semaphore = new SemaphoreSlim(1);
         private readonly ILogger log;
+        private IMessageBus messageBus;
+
         private int delay => 200;
 
-        public SerialPortTransport(IMessageFactory messageFactory, string serialPort, bool isRS485, ILogger logger)
+        public SerialPortTransport(IMessageFactory messageFactory, string serialPort, bool isRS485, 
+            ILogger<SerialPortTransport> logger)
         {
             if (string.IsNullOrWhiteSpace(serialPort))
             {
@@ -42,7 +47,7 @@ namespace BPServer.Autofac.Serial
         {
             if (!PortHelpers.PortNameExists(Name))
             {
-                log.Error($"Port: '{Name}' not exists");
+                log.LogError($"Port: '{Name}' not exists");
                 //throw new Exception($"{port.PortName} not exists");
                 return false;
             }
@@ -66,46 +71,54 @@ namespace BPServer.Autofac.Serial
                 stream.Handshake = Handshake.None;
                 stream.RtsEnable = true;
                 stream.DtrEnable = true;
-                log.Verbose($"Port {Name} in RS485 mode");
+                log.LogDebug($"Port {Name} in RS485 mode");
             }
 
             stream.Open();
             if (!stream.IsOpen)
             {
-                log.Error($"Error opening serial port {Name}");
+                log.LogCritical($"Error opening serial port {Name}");
                 //throw new Exception($"Error opening serial port {port.PortName}");
                 return false;
             }
-            log.Information($"Port {Name} open");
+            log.LogInformation($"Port {Name} open");
             if (stream == null)
             {
-                log.Error($"No serial port {Name}");
+                log.LogCritical($"No serial port {Name}");
                 // throw new Exception($"No serial port {port.PortName}");
                 return false;
             }
             if (stream.CtsHolding)
             {
-                log.Verbose($"Cts detected {Name}");
+                log.LogDebug($"Cts detected {Name}");
             }
             else
             {
-                log.Verbose($"Cts NOT detected {Name}");
+                log.LogDebug($"Cts NOT detected {Name}");
             }
-            log.Information($"Port listener started: {Name}");
+            log.LogInformation($"Port listener started: {Name}");
             return true;
         }
 
         private void OnStreamPinChanged(object sender, SerialPinChangedEventArgs e)
         {
-            log.Verbose($"On port: '{Name}' pin changed.");
+            log.LogInformation($"On port: '{Name}' pin changed.");
         }
 
         private void OnStreamErrorReceived(object sender, SerialErrorReceivedEventArgs e)
         {
-            log.Warning($"On port: '{Name}' ERROR recieved.");
+            log.LogWarning($"On port: '{Name}' ERROR recieved.");
         }
 
-        private async void OnStreamDataReceived(object sender, SerialDataReceivedEventArgs e) => await ReadMessageAsync();
+        private async void OnStreamDataReceived(object sender, SerialDataReceivedEventArgs e)
+        {
+            if (messageBus is null)
+            {
+                log.LogDebug($"On {Name} messageBus is not set");
+                return;
+            }
+            await ReadMessageAsync(); 
+        }
         
 
         private bool ReadHeader(Stopwatch sw, out ICollection<byte> list)
@@ -115,7 +128,7 @@ namespace BPServer.Autofac.Serial
             {
                 if (sw.ElapsedMilliseconds >= TimeSpan.FromSeconds(1).TotalMilliseconds)
                 {
-                    log.Warning($"ReadTimeout header on '{Name}'");
+                    log.LogWarning($"ReadTimeout header on '{Name}'");
                     return false;
                 }
                 byte _byte = 0;
@@ -125,7 +138,7 @@ namespace BPServer.Autofac.Serial
                 }
                 catch (Exception e)
                 {
-                    log.Error($"{Name}: on head '{e.ToString()}'");
+                    log.LogError($"{Name}: on head '{e.ToString()}'");
                     continue;
                 }
                 list.Add(_byte);
@@ -144,7 +157,7 @@ namespace BPServer.Autofac.Serial
             {
                 if (sw.ElapsedMilliseconds >= TimeSpan.FromSeconds(1).TotalMilliseconds)
                 {
-                    log.Warning($"ReadTimeout body on '{Name}'");
+                    log.LogWarning($"ReadTimeout body on '{Name}'");
                     return false;
                 }
                 byte _byte = 0;
@@ -154,7 +167,7 @@ namespace BPServer.Autofac.Serial
                 }
                 catch(Exception e )
                 {
-                    log.Error($"{Name}: on body '{e.ToString()}'");
+                    log.LogError($"{Name}: on body '{e.ToString()}'");
                     continue;
                 }
                 list.Add(_byte);
@@ -170,7 +183,7 @@ namespace BPServer.Autofac.Serial
             {
                 await semaphore.WaitAsync();
                 Stopwatch sw = new Stopwatch();
-                log.Debug($"Semaphore on '{Name}'");
+                log.LogDebug($"Semaphore on '{Name}'");
                 if (IsRS485 && stream.RtsEnable != true)
                 {
                     stream.RtsEnable = true;
@@ -190,41 +203,41 @@ namespace BPServer.Autofac.Serial
 
                         var res = bytes.ToArray();
                         string str = BitConverter.ToString(res);
-                        log.Verbose($"{Name}: '{str}'");
+                        log.LogDebug($"{Name}: '{str}'");
                         if (MessageFactory.CreateMessage(res, out IMessage message))
                         {
-                            OnDataReceived(message);
+                            messageBus.Publish(message, Name);
                         }
                         else
                         {
-                            log.Warning($"{Name}: Message Factory failed create message");
+                            log.LogWarning($"{Name}: Message Factory failed create message");
                         }  
                     }
                     else
                     {
-                        log.Warning($"Serial failed to read body, bytes:'{BitConverter.ToString(bytes.ToArray())}'");
+                        log.LogWarning($"Serial failed to read body, bytes:'{BitConverter.ToString(bytes.ToArray())}'");
                     }
                 }
                 else
                 {
-                    log.Warning($"Serial failed to read header, bytes:'{BitConverter.ToString(bytes.ToArray())}'");
+                    log.LogWarning($"Serial failed to read header, bytes:'{BitConverter.ToString(bytes.ToArray())}'");
                 }
             }
             catch (IOException ex)
             {
-                log.Error($"{Name}: '{ex.ToString()}'");
+                log.LogError($"{Name}: '{ex.ToString()}'");
             }
-            catch (System.TimeoutException ex)
+            catch (System.TimeoutException)
             {
-                log.Verbose($"{Name}: r:timeout");
+                log.LogDebug($"{Name}: r:timeout");
             }
             catch (InvalidOperationException ex)
             {
-                log.Error($"{Name}: '{ex.ToString()}'");
+                log.LogError($"{Name}: '{ex.ToString()}'");
             }
             catch(Exception ex)
             {
-                log.Error($"{Name}: '{ex.ToString()}'");
+                log.LogError($"{Name}: '{ex.ToString()}'");
             }
             finally
             {
@@ -233,17 +246,6 @@ namespace BPServer.Autofac.Serial
         }
 
         private readonly IMessageFactory MessageFactory;
-        public string Name { get; protected set; }
-
-        public event EventHandler<IMessage> DataReceived;
-
-        protected virtual void OnDataReceived(IMessage e)
-        {
-            EventHandler<IMessage> handler = DataReceived;
-            handler?.Invoke(this, e);
-        }
-
-        public string GetInfo() => Name;
 
         public async Task PushDataAsync(IMessage input)
         {
@@ -260,7 +262,7 @@ namespace BPServer.Autofac.Serial
             var message = input.Raw;
             if (stream.IsOpen)
             {
-                log.Verbose($"{Name}: btr '{stream.BytesToRead}'");
+                log.LogDebug($"{Name}: btr '{stream.BytesToRead}'");
                 do
                 {
                     await Task.Delay(TimeSpan.FromMilliseconds(10));
@@ -292,11 +294,11 @@ namespace BPServer.Autofac.Serial
                     }
                     var bytes = stream.BytesToWrite;
                     var size = stream.WriteBufferSize;
-                    log.Verbose($"wrote to port {Name}: {message}, bytes {bytes}, buff_size {size}");
+                    log.LogDebug($"wrote to port {Name}: {message}, bytes {bytes}, buff_size {size}");
                 }
                 catch (Exception ex)
                 {
-                    log.Error($"Push data ex: {Name}, {ex.ToString()}");
+                    log.LogError($"Push data ex: {Name}, {ex.ToString()}");
                     if (IsRS485 && stream.RtsEnable != true)
                     {
                         stream.RtsEnable = true;
@@ -316,7 +318,7 @@ namespace BPServer.Autofac.Serial
             }
             else
             {
-                log.Error($"Cannot write to port: {Name}, port closed");
+                log.LogError($"Cannot write to port: {Name}, port closed");
                 return;
             }
             return;
@@ -335,6 +337,21 @@ namespace BPServer.Autofac.Serial
             stream.Close();
             semaphore.Dispose();
             isDisposed = true;
+        }
+
+        public string GetInfo()
+        {
+            return Name;
+        }
+
+        public void SetMessageBus(IMessageBus messageBus)
+        {
+            if (messageBus is null)
+            {
+                throw new ArgumentNullException(nameof(messageBus));
+            }
+
+            this.messageBus = messageBus;
         }
     }
 }

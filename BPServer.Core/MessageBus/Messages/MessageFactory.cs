@@ -3,6 +3,7 @@ using BPServer.Core.MessageBus.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 
 namespace BPServer.Core.MessageBus.Messages
@@ -14,8 +15,8 @@ namespace BPServer.Core.MessageBus.Messages
         {
             var type = typeof(IMessage);
             var types = AppDomain.CurrentDomain.GetAssemblies()
-                .SelectMany(s => s.GetForwardedTypes())
-                .Where(p => type.IsAssignableFrom(p) && !p.IsAbstract && !p.IsInterface).ToHashSet();
+                .SelectMany(s => s.GetTypes())
+                .Where(p =>!(p.IsAbstract) && p.IsClass).Where(p=>type.IsAssignableFrom(p)).ToHashSet();
             messageTypes = new Dictionary<byte, Type>();
             foreach (var item in types)
             {

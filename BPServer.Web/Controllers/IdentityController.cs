@@ -16,11 +16,11 @@ using Microsoft.Net.Http.Headers;
 namespace BPServer.Web.Controllers
 {
     [Route("api/[controller]")]
-    public class AuthenticateController : Controller
+    public class IdentityController : Controller
     {
         private UserManager<ApplicationUser> userManager;
 
-        public AuthenticateController(UserManager<ApplicationUser> userManager)
+        public IdentityController(UserManager<ApplicationUser> userManager)
         {
             this.userManager = userManager;
         }

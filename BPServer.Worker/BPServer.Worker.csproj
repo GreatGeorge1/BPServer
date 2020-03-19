@@ -8,9 +8,17 @@
   <ItemGroup>
     <PackageReference Include="Autofac" Version="5.1.2" />
     <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="6.0.0" />
-    <PackageReference Include="MassTransit" Version="6.2.1" />
-    <PackageReference Include="MassTransit.Autofac" Version="6.2.1" />
-    <PackageReference Include="MassTransit.RabbitMQ" Version="6.2.1" />
+    <PackageReference Include="EasyCaching.InMemory" Version="0.8.5" />
+    <PackageReference Include="EasyCaching.SQLite" Version="0.8.5" />
+    <PackageReference Include="Google.Protobuf" Version="3.9.1" />
+    <PackageReference Include="Grpc.AspNetCore.Server" Version="2.23.2" />
+    <PackageReference Include="Grpc.Tools" Version="2.23.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="MassTransit" Version="6.2.2" />
+    <PackageReference Include="MassTransit.Autofac" Version="6.2.2" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="6.2.2" />
     <PackageReference Include="MassTransit.SerilogIntegration" Version="5.5.6" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="3.1.2" />
     <PackageReference Include="Polly" Version="7.2.0" />
@@ -24,5 +32,11 @@
     <ProjectReference Include="..\BPServer.Transports.SerialPort\BPServer.Transports.Serial.csproj" />
     <ProjectReference Include="..\BPSever.Infrastracture\BPSever.Infrastracture.csproj" />
     <ProjectReference Include="..\ConsoleApp1\ConsoleApp1.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Protobuf Include="..\greet.proto" GrpcServices="Server">
+      <Link>Protos\greet.proto</Link>
+    </Protobuf>
   </ItemGroup>
 </Project>

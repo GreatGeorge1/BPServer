@@ -67,11 +67,11 @@
                 {
                     temp.Add(item.Value);
                 }
-                if(!_commandTypes.TryAdd(item.Key.Route.Command, item.Value.CommandType))
+                if(!_commandTypes.TryAdd(item.Key.Command, item.Value.CommandType))
                 {
                     log.Debug("tryadd command failed on '{@CommandType}'", item.Value.CommandType);
                 }
-                if(!_messageTypes.TryAdd(item.Key.Route.MessageType, item.Value.MessageType))
+                if(!_messageTypes.TryAdd(item.Key.MessageType, item.Value.MessageType))
                 {
                     log.Debug("tryadd message failed on '{@MessageType}'", item.Value.MessageType);
                 }
@@ -108,7 +108,7 @@
             {
                 var commandByte = commandType.GetAttributeValue((CommandByteAttribute cbyte) => cbyte.Command);
                 var messageByte = message.GetAttributeValue((MessageTypeAttribute mtype) => mtype.MessageType);
-                var address = new Address(new Route(commandByte,messageByte),transportName);
+                var address = new Address(commandByte,messageByte,transportName);
                 var sub = SubscriptionInfo.Typed(address,commandType,message,handler);
                 addresses.Add(address, sub);
             }
@@ -134,8 +134,8 @@
             foreach (var item in _handlers.Keys)
             {
                 if (item.TransportName.Equals(address.TransportName)
-                && item.Route.Command == address.Route.Command
-                && item.Route.MessageType == address.Route.MessageType)
+                && item.Command == address.Command
+                && item.MessageType == address.MessageType)
                 {
                     return _handlers.GetValueOrDefault(item);
                 }
@@ -152,16 +152,23 @@
 
         public bool HasSubscriptionsForAddress(IAddress address)
         {
-            foreach(var item in _handlers.Keys)
+            var temp=_handlers.Keys.AsParallel().Where(x => x.TransportName.Equals(address.TransportName)
+                && x.Command == address.Command && x.MessageType == address.MessageType).FirstOrDefault();
+            if(temp is null)
             {
-                if(item.TransportName.Equals(address.TransportName)
-                && item.Route.Command == address.Route.Command 
-                && item.Route.MessageType == address.Route.MessageType)
-                {
-                    return _handlers.Values.Count > 0;
-                }
+                return false;
             }
-            return false;
+            return _handlers.Values.Count > 0;
+            //foreach(var item in _handlers.Keys)
+            //{
+            //    if(item.TransportName.Equals(address.TransportName)
+            //    && item.Command == address.Command 
+            //    && item.MessageType == address.MessageType)
+            //    {
+            //        return _handlers.Values.Count > 0;
+            //    }
+            //}
+            //return false;
         }
 
         public bool HasSubscriptionsForCommand<T>(string transportName) where T : ICommand
@@ -174,7 +181,7 @@
             var commandByte = typeof(T).GetAttributeValue((CommandByteAttribute cmd) => cmd.Command);
             foreach(var item in _handlers)
             {
-                if(item.Key.TransportName.Equals(transportName) && item.Key.Route.Command == commandByte)
+                if(item.Key.TransportName.Equals(transportName) && item.Key.Command == commandByte)
                 {
                     return true;
                 }
