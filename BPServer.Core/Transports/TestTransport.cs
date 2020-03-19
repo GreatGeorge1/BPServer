@@ -1,5 +1,6 @@
-﻿using BPServer.Core.MessageBus.Messages;
-using Serilog;
+﻿using BPServer.Core.MessageBus;
+using BPServer.Core.MessageBus.Messages;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -10,7 +11,12 @@ namespace BPServer.Core.Transports
     {
         private readonly ILogger log;
         private bool isDisposed;
-        public TestTransport(ILogger logger)
+
+        public string Name => "test_transport";
+
+        private IMessageBus _messageBus;
+
+        public TestTransport(ILogger<TestTransport> logger)
         {
             log = logger ?? throw new ArgumentNullException(nameof(logger));
             Start();
@@ -24,33 +30,28 @@ namespace BPServer.Core.Transports
             mm.AddRange(Message.IntToHighLow(body.Length));
             mm.AddRange(body);
             var message = new NotificationMessage(mm.ToArray());
+            await Task.Delay(TimeSpan.FromSeconds(3));
             while (!isDisposed)
             {
-                await Task.Delay(TimeSpan.FromSeconds(3));
+                await Task.Delay(TimeSpan.FromSeconds(1));
                 OnDataReceived(message);
                //log.Error("Test mesage pushed");
             }
         }
 
-
-        public string Name => "TestTransport";
-
-        public event EventHandler<IMessage> DataReceived;
-
         protected virtual void OnDataReceived(IMessage e)
         {
-            EventHandler<IMessage> handler = DataReceived;
-            handler?.Invoke(this, e);
-        }
-
-        public string GetInfo()
-        {
-            return Name;
+            if(_messageBus is null)
+            {
+                log.LogDebug($"On {Name} messageBus is not set");
+                return;
+            }
+            _messageBus.Publish(e, Name);
         }
 
         public Task PushDataAsync(IMessage input)
         {
-            log.Verbose("Data pushed");
+            log.LogDebug("Data pushed");
             return Task.CompletedTask;
         }
 
@@ -62,7 +63,19 @@ namespace BPServer.Core.Transports
         protected virtual void Dispose(bool disposing)
         {
             if (isDisposed) return;
+            //Clear();
             isDisposed = true;
         }
+
+        public string GetInfo()
+        {
+            return Name;
+        }
+
+        public void SetMessageBus(IMessageBus messageBus)
+        {
+            _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
+        }
     }
+
 }

@@ -5,10 +5,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Threading.Tasks;
-using Serilog;
 using BPServer.Core.MessageBus.Messages;
 using BPServer.Core.MessageBus.Handlers.Address;
 using BPServer.Core.MessageBus.Handlers;
+using Microsoft.Extensions.Logging;
 
 namespace BPServer.Core.MessageBus
 {
@@ -20,61 +20,45 @@ namespace BPServer.Core.MessageBus
         private readonly ILifetimeScope _autofac;
         private readonly ILogger log;
 
-        public SerialMessageBus(ITransportManager transportManager,
+        public SerialMessageBus(
             IMessageBusSubscriptionManager subscriptionManager,
             ILifetimeScope autofac,
-            ILogger logger)
+            ILogger<SerialMessageBus> logger, ILogger<TransportManager> logger1)
         {
-            _transportManager = transportManager ?? throw new ArgumentNullException(nameof(transportManager));
-            _transportManager.MessageReceived += OnMessageReceived;
+            _transportManager = new TransportManager(logger1);
+            _transportManager.TransportAdded += OnTransportAdded;
             _subscriptionManager = subscriptionManager ?? throw new ArgumentNullException(nameof(subscriptionManager));
             _autofac = autofac ?? throw new ArgumentNullException(nameof(autofac));
             log = logger ?? throw new ArgumentNullException(nameof(logger));
-            log.Information("MessageBus Created");
+            log.LogDebug("MessageBus Created");
         }
 
-        protected async void OnMessageReceived(object sender, MessageReceivedEventArgs e)
+        protected async Task<bool> ProcessMessage(IMessage message, IAddress address)
         {
-            var serialPort = e.Transport.Name;
-            log.Verbose($"MessageBus OnMessageReceived, TransportName: '{serialPort}'");
-            await ProcessMessage(e.Message, serialPort).ConfigureAwait(false);
-        }
-
-        protected async Task<bool> ProcessMessage(IMessage message, string serialPort)
-        {
-            var processed = false;
-            var address = new Address(new Route(message.Command, (byte)message.Type), serialPort);
-            if (_subscriptionManager.HasSubscriptionsForAddress(address))
+            log.LogDebug("Process message");
+            var processed = true;
+            using (var scope = _autofac.BeginLifetimeScope(AUTOFAC_SCOPE_NAME))
             {
-                processed = true;
-                using (var scope = _autofac.BeginLifetimeScope(AUTOFAC_SCOPE_NAME))
+                var subscriptions = _subscriptionManager.GetHandlersForAddress(address);
+
+                foreach (var subscription in subscriptions)
                 {
-                    var subscriptions = _subscriptionManager.GetHandlersForAddress(address);
-                 
-                    foreach(var subscription in subscriptions)
+                    log.LogDebug($"ProcessMessage foreach, transport: '{address.TransportName}'");
+                    try
                     {
-                        log.Debug($"ProcessMessage foreach, transport: '{serialPort}'");
-                        try
-                        {
-                            var handler = scope.Resolve(subscription.HandlerType);
-                            if (handler is null) continue;
-                            var messageType = _subscriptionManager.GetMessageTypeByByte((byte)message.Type);
-                            var commandType = _subscriptionManager.GetCommandTypeByByte(message.Command);
-                            var concreteType = typeof(IHandler<,>).MakeGenericType(new Type[] { messageType, commandType });
-                            await (Task)concreteType.GetMethod("Handle").Invoke(handler, new object[] { message, address });
-                        }
-                        catch(Exception e)
-                        {
-                            processed = false;
-                            await ExceptionReceivedHandler(new ExceptionReceivedEventArgs(e)).ConfigureAwait(false);
-                        }
+                        var handler = scope.Resolve(subscription.HandlerType);
+                        if (handler is null) continue;
+                        var messageType = _subscriptionManager.GetMessageTypeByByte((byte)message.Type);
+                        var commandType = _subscriptionManager.GetCommandTypeByByte(message.Command);
+                        var concreteType = typeof(IHandler<,>).MakeGenericType(new Type[] { messageType, commandType });
+                        await (Task)concreteType.GetMethod("Handle").Invoke(handler, new object[] { message, address });
+                    }
+                    catch (Exception e)
+                    {
+                        processed = false;
+                        await ExceptionReceivedHandler(new ExceptionReceivedEventArgs(e, message, address.TransportName)).ConfigureAwait(false);
                     }
                 }
-
-            }
-            else
-            {
-                log.Debug($"MessageBus OnMessageReceived, TransportName: '{serialPort}', No Subscription");
             }
             return processed;
         }
@@ -83,23 +67,37 @@ namespace BPServer.Core.MessageBus
             var ex = e.Exception;
             //var context = e.ExceptionReceivedContext;
 
-            log.Warning(ex.ToString(), "ERROR handling message: {ExceptionMessage} - Context: {@ExceptionContext}", ex.Message 
-                //context.FullName
+            log.LogWarning(ex.ToString(), "ERROR handling message: {ExceptionMessage} - Exchange: {@exchange}", ex.Message,
+                e.Exchange
                 );
 
             return Task.CompletedTask;
         }
 
-
-        public  async Task Publish(IMessage message, string serialPort)
+        public async Task Publish(IMessage message, string exchange)
         {
-            var transport = _transportManager.GetTransportByName(serialPort);
-            if(transport is null)
+            var address = new Address(message.Command, message.Type, exchange);
+            if (_subscriptionManager.HasSubscriptionsForAddress(address))
             {
-                log.Warning($"{serialPort} not exist in TrasnportManager");
-                return;
+                if (await ProcessMessage(message, address))
+                {
+                    return;
+                }
+                else
+                {
+                    log.LogWarning($"Message NOT processed: '{BitConverter.ToString(message.Raw)}'");
+                }
             }
-            await transport.PushDataAsync(message).ConfigureAwait(false);
+            else
+            {
+                var transport = _transportManager.GetTransportByName(exchange);
+                if (transport is null)
+                {
+                    log.LogWarning($"{exchange} not exist in TrasnportManager");
+                    return;
+                }
+                await transport.PushDataAsync(message).ConfigureAwait(false);
+            }
         }
 
         public void Subscribe<T>(string serialPort) where T : IHandler
@@ -113,6 +111,14 @@ namespace BPServer.Core.MessageBus
         }
 
         bool disposed = false;
+
+        public event EventHandler<TransportAddedEventArgs> TransportAdded;
+
+        protected void OnTransportAdded(object sender, TransportAddedEventArgs e)
+        {
+            TransportAdded?.Invoke(this, e);
+        }
+
 
         // Public implementation of Dispose pattern callable by consumers.
         public void Dispose()
@@ -130,9 +136,18 @@ namespace BPServer.Core.MessageBus
             if (disposing)
             {
                 _subscriptionManager.Clear();
+                _transportManager.Clear();
             }
 
             disposed = true;
         }
+
+        public void AddTransport(ITransport transport)
+        {
+            _transportManager.AddTransport(transport);
+            transport.SetMessageBus(this);
+        }
+
+        public void RemoveTransport(ITransport transport) => _transportManager.RemoveTransport(transport);
     }
 }

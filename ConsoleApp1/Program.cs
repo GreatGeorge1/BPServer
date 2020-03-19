@@ -14,9 +14,9 @@ using BPServer.Core.MessageBus.Messages;
 using BPServer.Core.MessageBus.Handlers.Address;
 using BPServer.Core.MessageBus.Handlers;
 using BPServer.Core.MessageBus.Attributes;
-using Serilog;
 using BPServer.Autofac.Serial;
 using BPServer.Core.MessageBus.Command;
+using Microsoft.Extensions.Logging;
 
 namespace ConsoleApp1
 {
@@ -72,8 +72,8 @@ namespace ConsoleApp1
             messageBus.Subscribe<BleNotificationHandler>("/dev/ttyS1");
             messageBus.Subscribe<FingerNotificationHandler>("/dev/ttyS1");
             messageBus.Subscribe<PingAcknowledgeHandler>("/dev/ttyS1");
-            var transport = new SerialPortTransport(mfactory, "/dev/ttyS1", true, logger);
-            transportManager.AddTransport(transport);
+           // var transport = new SerialPortTransport(mfactory, "/dev/ttyS1", true, logger);
+           // transportManager.AddTransport(transport);
 
 
 
@@ -154,7 +154,7 @@ namespace ConsoleApp1
         private readonly ICommand _cardCommand;
         private readonly IMessageBus _messageBus;
         private readonly ILogger log;
-        public CardNotificationHandler(CardCommand command, ILogger logger, IMessageBus messageBus)
+        public CardNotificationHandler(CardCommand command, ILogger<CardNotificationHandler> logger, IMessageBus messageBus)
         {
             //_sagasManager = sagasManager ?? throw new ArgumentNullException(nameof(sagasManager));
             _cardCommand = command ?? throw new ArgumentNullException(nameof(command));
@@ -163,7 +163,7 @@ namespace ConsoleApp1
         }
         public async Task Handle(NotificationMessage input, IAddress address)
         {
-            log.Information("{@Address}; message body: '{body}'",address, BitConverter.ToString(input.Body.ToArray()));
+            log.LogInformation("{@Address}; message body: '{body}'",address, BitConverter.ToString(input.Body.ToArray()));
             var message = new AcknowledgeMessage(_cardCommand.Command, new byte[] { 0x00, 0x01 });
             await _messageBus.Publish(message, address.TransportName);
         }
@@ -175,7 +175,7 @@ namespace ConsoleApp1
         private readonly ICommand _fingerCommand;
         private readonly IMessageBus _messageBus;
         private readonly ILogger log;
-        public FingerNotificationHandler(FingerCommand command, ILogger logger, IMessageBus messageBus)
+        public FingerNotificationHandler(FingerCommand command, ILogger<FingerNotificationHandler> logger, IMessageBus messageBus)
         {
             //_sagasManager = sagasManager ?? throw new ArgumentNullException(nameof(sagasManager));
             _fingerCommand = command ?? throw new ArgumentNullException(nameof(command));
@@ -184,7 +184,7 @@ namespace ConsoleApp1
         }
         public async Task Handle(NotificationMessage input, IAddress address)
         {
-            log.Information("{@Address}; message body: '{body}'", address, BitConverter.ToString(input.Body.ToArray()));
+            log.LogInformation("{@Address}; message body: '{body}'", address, BitConverter.ToString(input.Body.ToArray()));
             var message = new AcknowledgeMessage(_fingerCommand.Command, new byte[] { 0x00, 0x01 });
             await _messageBus.Publish(message, address.TransportName);
         }
@@ -196,7 +196,7 @@ namespace ConsoleApp1
         private readonly ICommand _bleCommand;
         private readonly IMessageBus _messageBus;
         private readonly ILogger log;
-        public BleNotificationHandler(BleCommand command, ILogger logger, IMessageBus messageBus)
+        public BleNotificationHandler(BleCommand command, ILogger<BleNotificationHandler> logger, IMessageBus messageBus)
         {
             //_sagasManager = sagasManager ?? throw new ArgumentNullException(nameof(sagasManager));
             _bleCommand = command ?? throw new ArgumentNullException(nameof(command));
@@ -205,7 +205,7 @@ namespace ConsoleApp1
         }
         public async Task Handle(NotificationMessage input, IAddress address)
         {
-            log.Information("{@Address}; message body: '{body}'", address, BitConverter.ToString(input.Body.ToArray()));
+            log.LogInformation("{@Address}; message body: '{body}'", address, BitConverter.ToString(input.Body.ToArray()));
             var message = new AcknowledgeMessage(_bleCommand.Command, new byte[] { 0x00, 0x01 });
             await _messageBus.Publish(message, address.TransportName);
         }

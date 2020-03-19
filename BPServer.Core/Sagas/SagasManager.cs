@@ -1,5 +1,5 @@
 ﻿using BPServer.Core.MessageBus.Handlers;
-using Serilog;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +11,7 @@ namespace BPServer.Core.Sagas
         private bool isDisposed;
         protected readonly List<ISaga> _sagas;
         private readonly ILogger log;
-        public SagasManager(ILogger logger)
+        public SagasManager(ILogger<SagasManager> logger)
         {
             log = logger ?? throw new ArgumentNullException(nameof(logger));
             _sagas = new List<ISaga>();;
@@ -27,19 +27,19 @@ namespace BPServer.Core.Sagas
                 saga.TimeoutReached -= OnTimeoutReached;
                 saga.Error -= OnError;
             }
-            log.Information($"Saga Completed: '{saga.Id}', removed");
+            log.LogInformation($"Saga Completed: '{saga.Id}', removed");
         }
 
         protected void OnError(object sender, Guid id)
         {
-            log.Warning($"Saga Error: '{id}'");
+            log.LogWarning($"Saga Error: '{id}'");
             var saga = _sagas.First(x => x.Id == id);
             saga.RepeatIncrement();
         }
 
         protected void OnTimeoutReached(object sender, Guid id)
         {
-            log.Warning($"Saga Timeout: '{id}'");
+            log.LogWarning($"Saga Timeout: '{id}'");
             var saga = _sagas.First(x => x.Id == id);
             if (saga.IsCompleted)
             {
@@ -50,7 +50,7 @@ namespace BPServer.Core.Sagas
 
         protected void OnRepeatLimitReached(object sender, Guid id)
         {
-            log.Error($"Saga RepeatLimitReached: '{id}', removed");
+            log.LogError($"Saga RepeatLimitReached: '{id}', removed");
             var saga = _sagas.First(x => x.Id == id);
             _sagas.Remove(saga);
         }
@@ -62,7 +62,7 @@ namespace BPServer.Core.Sagas
             serverSaga.TimeoutReached += OnTimeoutReached;
             serverSaga.Error += OnError;
             _sagas.Add(serverSaga);
-            log.Debug($"Saga added: '{serverSaga.Id}'");
+            log.LogDebug($"Saga added: '{serverSaga.Id}'");
         }
 
         public bool TryGet(Guid id, out ISaga saga)
