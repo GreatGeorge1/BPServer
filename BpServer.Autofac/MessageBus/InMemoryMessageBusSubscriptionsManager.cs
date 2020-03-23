@@ -131,16 +131,15 @@
 
         public IEnumerable<SubscriptionInfo> GetHandlersForAddress(IAddress address)
         {
-            foreach (var item in _handlers.Keys)
+            var temp = _handlers.Keys.AsParallel()
+                .Where(x => x.TransportName.Equals(address.TransportName)
+                && x.Command == address.Command
+                && x.MessageType == address.MessageType).FirstOrDefault();
+            if(temp is null)
             {
-                if (item.TransportName.Equals(address.TransportName)
-                && item.Command == address.Command
-                && item.MessageType == address.MessageType)
-                {
-                    return _handlers.GetValueOrDefault(item);
-                }
+                return default;
             }
-            return default;
+            return _handlers.GetValueOrDefault(temp);
         }
 
         public Type GetMessageTypeByByte(byte input)
@@ -159,16 +158,6 @@
                 return false;
             }
             return _handlers.Values.Count > 0;
-            //foreach(var item in _handlers.Keys)
-            //{
-            //    if(item.TransportName.Equals(address.TransportName)
-            //    && item.Command == address.Command 
-            //    && item.MessageType == address.MessageType)
-            //    {
-            //        return _handlers.Values.Count > 0;
-            //    }
-            //}
-            //return false;
         }
 
         public bool HasSubscriptionsForCommand<T>(string transportName) where T : ICommand
@@ -177,16 +166,14 @@
             {
                 throw new ArgumentException("message", nameof(transportName));
             }
-
             var commandByte = typeof(T).GetAttributeValue((CommandByteAttribute cmd) => cmd.Command);
-            foreach(var item in _handlers)
+            var temp = _handlers.Keys.AsParallel()
+                .FirstOrDefault(x => x.TransportName.Equals(transportName) && x.Command == commandByte);
+            if(temp is null)
             {
-                if(item.Key.TransportName.Equals(transportName) && item.Key.Command == commandByte)
-                {
-                    return true;
-                }
+               return false;
             }
-            return false;
+            return true;
         }
 
         public void RemoveSubscription<T>(string transportName) where T : IHandler

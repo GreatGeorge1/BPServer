@@ -8,6 +8,7 @@ namespace BPServer.Core.MessageBus.Handlers
         where TMessage : IMessage
         where TCommand : ICommand
     {
+        //void SetNext(IHandler handler);
         Task Handle(TMessage @input, IAddress address);
     }
 
