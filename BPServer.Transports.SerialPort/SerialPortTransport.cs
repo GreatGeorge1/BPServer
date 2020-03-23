@@ -139,11 +139,28 @@ namespace BPServer.Autofac.Serial
                 catch (Exception e)
                 {
                     log.LogError($"{Name}: on head '{e.ToString()}'");
+                    this.LogDebugStreamData();
                     continue;
                 }
                 list.Add(_byte);
             } while (list.Count < 6);
             return true;
+        }
+
+        private void LogDebugStreamData()
+        {
+            log.LogDebug($"{Name}: data, " +
+                $"IsOpen: '{stream.IsOpen}', " +
+                $"RTS: '{stream.RtsEnable}', " +
+                $"DTR:'{stream.DtrEnable}', " +
+                $"CTS: '{stream.CtsHolding}', " +
+                $"BTR: '{stream.BytesToRead}', " +
+                $"BTW: '{stream.BytesToWrite}', " +
+                $"BreakState: '{stream.BreakState}', " +
+                $"Encoding: '{stream.Encoding.WebName}'," +
+                $"Handshake: '{stream.Handshake}', " +
+                $"BaudRate: '{stream.BaudRate}', " +
+                $"DataBits: '{stream.DataBits}'");
         }
 
         private bool ReadBody(Stopwatch sw, int length, out ICollection<byte> list)
@@ -168,6 +185,7 @@ namespace BPServer.Autofac.Serial
                 catch(Exception e )
                 {
                     log.LogError($"{Name}: on body '{e.ToString()}'");
+                    this.LogDebugStreamData();
                     continue;
                 }
                 list.Add(_byte);
@@ -210,7 +228,7 @@ namespace BPServer.Autofac.Serial
                         }
                         else
                         {
-                            log.LogWarning($"{Name}: Message Factory failed create message");
+                            log.LogWarning($"{Name}: Message Factory failed create message, '{BitConverter.ToString(res)}'");
                         }  
                     }
                     else
@@ -226,18 +244,22 @@ namespace BPServer.Autofac.Serial
             catch (IOException ex)
             {
                 log.LogError($"{Name}: '{ex.ToString()}'");
+                this.LogDebugStreamData();
             }
             catch (System.TimeoutException)
             {
                 log.LogDebug($"{Name}: r:timeout");
+                this.LogDebugStreamData();
             }
             catch (InvalidOperationException ex)
             {
                 log.LogError($"{Name}: '{ex.ToString()}'");
+                this.LogDebugStreamData();
             }
             catch(Exception ex)
             {
                 log.LogError($"{Name}: '{ex.ToString()}'");
+                this.LogDebugStreamData();
             }
             finally
             {
@@ -294,11 +316,12 @@ namespace BPServer.Autofac.Serial
                     }
                     var bytes = stream.BytesToWrite;
                     var size = stream.WriteBufferSize;
-                    log.LogDebug($"wrote to port {Name}: {message}, bytes {bytes}, buff_size {size}");
+                    log.LogDebug($"wrote to port {Name}: {BitConverter.ToString(message)}, bytes {bytes}, buff_size {size}");
                 }
                 catch (Exception ex)
                 {
                     log.LogError($"Push data ex: {Name}, {ex.ToString()}");
+                    this.LogDebugStreamData();
                     if (IsRS485 && stream.RtsEnable != true)
                     {
                         stream.RtsEnable = true;
