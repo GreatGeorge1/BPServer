@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BPServer.Web", "BPServer.We
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleApp1", "ConsoleApp1\ConsoleApp1.csproj", "{EDDF115A-3853-4498-9FF2-F9444B356641}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BPServer.Autofac", "BpServer.Autofac\BPServer.Autofac.csproj", "{787ECA73-8A29-4856-AF3B-9DDB96D8EE6C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BPServer.Autofac", "BPServer.Autofac\BPServer.Autofac.csproj", "{787ECA73-8A29-4856-AF3B-9DDB96D8EE6C}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BPServer.Transports.Serial", "BPServer.Transports.SerialPort\BPServer.Transports.Serial.csproj", "{79210BCC-F750-48E6-A473-C4FC841563D3}"
 EndProject
