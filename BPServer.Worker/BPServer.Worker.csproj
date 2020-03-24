@@ -27,7 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\BpServer.Autofac\BPServer.Autofac.csproj" />
+    <ProjectReference Include="..\BPServer.Autofac\BPServer.Autofac.csproj" />
     <ProjectReference Include="..\BPServer.Core\BPServer.Core.csproj" />
     <ProjectReference Include="..\BPServer.Transports.SerialPort\BPServer.Transports.Serial.csproj" />
     <ProjectReference Include="..\BPSever.Infrastracture\BPSever.Infrastracture.csproj" />
