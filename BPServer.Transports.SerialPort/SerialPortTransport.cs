@@ -74,7 +74,10 @@ namespace BPServer.Autofac.Serial
                 log.LogDebug($"Port {Name} in RS485 mode");
             }
 
-            stream.Open();
+            try
+            {
+                stream.Open();
+            }catch(Exception){}
             if (!stream.IsOpen)
             {
                 log.LogCritical($"Error opening serial port {Name}");
